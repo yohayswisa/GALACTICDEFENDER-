@@ -158,10 +158,105 @@
         .stats-panel { background: rgba(0,0,0,0.5); border-radius: 10px; padding: 8px; margin-top: 10px; font-size: 11px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
         .critical-hit { animation: critFlash 0.2s ease-out; }
         @keyframes critFlash { 0% { text-shadow: 0 0 0px #ffaa00; } 50% { text-shadow: 0 0 20px #ffaa00; } 100% { text-shadow: 0 0 0px #ffaa00; } }
+
+        /* ===== CINEMATIC INTRO ===== */
+        #cinematic-intro {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 3000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; overflow: hidden;
+            transition: opacity 0.8s ease-out;
+        }
+        #cinematic-intro.fade-out { opacity: 0; pointer-events: none; }
+        #intro-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #intro-scanlines {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+        }
+        #intro-content { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; text-align: center; width: 90%; max-width: 500px; }
+        #intro-title {
+            font-size: clamp(28px, 7vw, 56px); font-weight: 900; letter-spacing: 4px;
+            color: #00d2ff; opacity: 0; transform: scale(0.7);
+            text-shadow: 0 0 30px #00d2ff, 0 0 60px #00d2ff55, 0 0 90px #00d2ff33;
+            animation: none; transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        #intro-title.reveal { opacity: 1; transform: scale(1); animation: introGlow 2s ease-in-out infinite alternate; }
+        @keyframes introGlow {
+            from { text-shadow: 0 0 20px #00d2ff, 0 0 40px #00d2ff55; }
+            to   { text-shadow: 0 0 40px #00d2ff, 0 0 80px #00d2ff88, 0 0 120px #00d2ff44; }
+        }
+        #intro-title-sub {
+            font-size: clamp(11px, 2.5vw, 16px); color: #ff66ff; letter-spacing: 6px;
+            opacity: 0; transition: opacity 0.6s ease-out 0.3s; margin-top: 6px;
+        }
+        #intro-title-sub.reveal { opacity: 1; }
+        #intro-cinematic-text {
+            min-height: 60px; margin: 30px 0 10px; font-size: clamp(13px, 3vw, 18px);
+            color: #00ffaa; letter-spacing: 2px; font-weight: bold; opacity: 0;
+            transition: opacity 0.5s; text-shadow: 0 0 8px #00ffaa88;
+        }
+        #intro-cinematic-text.visible { opacity: 1; }
+        #intro-cinematic-text .blink-cursor { animation: cursorBlink 0.6s infinite; }
+        @keyframes cursorBlink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+        #intro-progress-container {
+            width: 80%; max-width: 320px; opacity: 0; transition: opacity 0.5s;
+            margin-top: 20px;
+        }
+        #intro-progress-container.visible { opacity: 1; }
+        #intro-progress-status { font-size: 10px; color: #00ffaa; letter-spacing: 2px; margin-bottom: 6px; }
+        #intro-progress-outer {
+            width: 100%; height: 10px; background: rgba(255,255,255,0.06);
+            border: 1px solid #00d2ff55; border-radius: 20px; overflow: hidden; position: relative;
+        }
+        #intro-progress-outer::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,0,0,0.15) 8px, rgba(0,0,0,0.15) 10px);
+            pointer-events: none;
+        }
+        #intro-progress-inner {
+            width: 0%; height: 100%; border-radius: 20px;
+            background: linear-gradient(90deg, #00d2ff, #00ffaa);
+            transition: width 0.15s; box-shadow: 0 0 12px #00d2ff88;
+        }
+        #intro-progress-pct { font-size: 11px; color: #00d2ff; margin-top: 4px; letter-spacing: 1px; }
+        #intro-launch-prompt {
+            font-size: clamp(14px, 3.5vw, 22px); color: #00d2ff; letter-spacing: 3px;
+            font-weight: bold; opacity: 0; margin-top: 25px; cursor: pointer;
+            animation: none;
+        }
+        #intro-launch-prompt.reveal { opacity: 1; animation: launchPulse 1.2s ease-in-out infinite; }
+        @keyframes launchPulse {
+            0%,100% { opacity: 0.5; text-shadow: 0 0 5px #00d2ff44; }
+            50%     { opacity: 1;   text-shadow: 0 0 25px #00d2ff, 0 0 50px #00d2ff66; }
+        }
+        #intro-skip-btn {
+            position: absolute; top: 15px; right: 15px; z-index: 10;
+            background: rgba(0,30,60,0.5); border: 1px solid #00d2ff55; color: #00d2ff88;
+            padding: 6px 18px; border-radius: 20px; font-size: 11px; font-weight: bold;
+            cursor: pointer; letter-spacing: 1px; transition: 0.2s; backdrop-filter: blur(3px);
+        }
+        #intro-skip-btn:hover { background: rgba(0,80,120,0.6); border-color: #00d2ff; color: #fff; }
     </style>
 </head>
 <body>
-<div id="loader-init" class="loader-overlay">
+<!-- CINEMATIC INTRO OVERLAY -->
+<div id="cinematic-intro">
+    <canvas id="intro-canvas"></canvas>
+    <div id="intro-scanlines"></div>
+    <button id="intro-skip-btn" onclick="skipIntro()">SKIP ▶</button>
+    <div id="intro-content">
+        <div id="intro-title">GALACTIC DEFENDER</div>
+        <div id="intro-title-sub">UPDATE 10.5</div>
+        <div id="intro-cinematic-text"></div>
+        <div id="intro-progress-container">
+            <div id="intro-progress-status">WARP INITIATED</div>
+            <div id="intro-progress-outer"><div id="intro-progress-inner"></div></div>
+            <div id="intro-progress-pct">0%</div>
+        </div>
+        <div id="intro-launch-prompt">PRESS TO LAUNCH</div>
+    </div>
+</div>
+
+<div id="loader-init" class="loader-overlay" style="display:none;">
     <div class="loader-content">
         <h1 style="color:#00d2ff;letter-spacing:2px;font-size:1.5rem;">WARP INITIATED</h1>
         <p style="color:#00ffaa;font-size:9px;">CALIBRATING...</p>
@@ -425,6 +520,255 @@
 <canvas id="crosshair"></canvas>
 
 <script>
+// ============================================
+// CINEMATIC INTRO SYSTEM
+// ============================================
+const IntroPhase = { WARP_IN:0, TITLE_REVEAL:1, CINEMATIC_TEXT:2, LOADING:3, READY:4 };
+let introPhase = IntroPhase.WARP_IN;
+let introActive = true;
+let introStartTime = 0;
+let introWarpStars = [];
+let introCanvas, introCtx, introAnimId;
+let introProgress = 0;
+let introLoadCallback = null;
+let introCinematicLines = [
+    { text: 'SECTOR 7 BREACHED...', dur: 2200 },
+    { text: 'HOSTILE FLEET DETECTED', dur: 2000 },
+    { text: 'ALL HANDS TO BATTLE STATIONS', dur: 2000 },
+    { text: 'PREPARE FOR BATTLE', dur: 1800 },
+];
+let introCinematicIdx = 0;
+let introTypewriterTimer = null;
+let introPhaseTimers = [];
+
+function initIntroCanvas() {
+    introCanvas = document.getElementById('intro-canvas');
+    introCtx = introCanvas.getContext('2d');
+    resizeIntroCanvas();
+    // Create warp stars
+    const cx = introCanvas.width / 2, cy = introCanvas.height / 2;
+    for (let i = 0; i < 250; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * Math.min(cx, cy) * 0.15;
+        introWarpStars.push({
+            x: cx + Math.cos(angle) * dist,
+            y: cy + Math.sin(angle) * dist,
+            z: Math.random() * 1.5 + 0.2,
+            prevX: 0, prevY: 0
+        });
+    }
+    introStartTime = performance.now();
+    introAnimId = requestAnimationFrame(introLoop);
+}
+
+function resizeIntroCanvas() {
+    if (introCanvas) {
+        introCanvas.width = window.innerWidth;
+        introCanvas.height = window.innerHeight;
+    }
+}
+
+function introLoop(now) {
+    if (!introActive) return;
+    const elapsed = now - introStartTime;
+    introCtx.clearRect(0, 0, introCanvas.width, introCanvas.height);
+    introCtx.fillStyle = '#000';
+    introCtx.fillRect(0, 0, introCanvas.width, introCanvas.height);
+
+    // Draw nebula-like background glow
+    const ng1 = introCtx.createRadialGradient(introCanvas.width*0.3, introCanvas.height*0.4, 0, introCanvas.width*0.3, introCanvas.height*0.4, introCanvas.width*0.5);
+    ng1.addColorStop(0, 'rgba(0,80,160,0.15)'); ng1.addColorStop(1, 'rgba(0,0,0,0)');
+    introCtx.fillStyle = ng1; introCtx.fillRect(0, 0, introCanvas.width, introCanvas.height);
+    const ng2 = introCtx.createRadialGradient(introCanvas.width*0.75, introCanvas.height*0.6, 0, introCanvas.width*0.75, introCanvas.height*0.6, introCanvas.width*0.4);
+    ng2.addColorStop(0, 'rgba(80,0,100,0.12)'); ng2.addColorStop(1, 'rgba(0,0,0,0)');
+    introCtx.fillStyle = ng2; introCtx.fillRect(0, 0, introCanvas.width, introCanvas.height);
+
+    // Warp streak speed based on phase
+    const warpSpeed = introPhase === IntroPhase.WARP_IN ? (0.3 + Math.min(elapsed / 3000, 1) * 2.5) :
+                      introPhase === IntroPhase.LOADING ? 0.4 :
+                      introPhase === IntroPhase.READY ? 0.2 : 0.6;
+    const cx = introCanvas.width / 2, cy = introCanvas.height / 2;
+
+    // Draw & update warp stars
+    for (const s of introWarpStars) {
+        s.prevX = s.x; s.prevY = s.y;
+        const dx = s.x - cx, dy = s.y - cy;
+        s.x += dx * 0.015 * s.z * warpSpeed;
+        s.y += dy * 0.015 * s.z * warpSpeed;
+        // Reset if out of bounds
+        if (s.x < -10 || s.x > introCanvas.width + 10 || s.y < -10 || s.y > introCanvas.height + 10) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * 5;
+            s.x = cx + Math.cos(angle) * dist;
+            s.y = cy + Math.sin(angle) * dist;
+            s.prevX = s.x; s.prevY = s.y;
+            s.z = Math.random() * 1.5 + 0.2;
+        }
+        const streakLen = warpSpeed * s.z;
+        const alpha = Math.min(0.8, s.z * 0.5 * (introPhase === IntroPhase.WARP_IN ? Math.min(elapsed/1500,1) : 0.6));
+        introCtx.strokeStyle = introPhase === IntroPhase.READY ? `rgba(0,210,255,${alpha})` : `rgba(0,255,170,${alpha})`;
+        introCtx.lineWidth = Math.max(0.5, s.z * 0.8);
+        introCtx.beginPath();
+        introCtx.moveTo(s.prevX, s.prevY);
+        introCtx.lineTo(s.x, s.y);
+        introCtx.stroke();
+        // Bright tip
+        introCtx.fillStyle = `rgba(255,255,255,${alpha * 0.8})`;
+        introCtx.fillRect(s.x - 0.5, s.y - 0.5, 1.5, 1.5);
+    }
+
+    // Phase transitions
+    if (introPhase === IntroPhase.WARP_IN && elapsed > 2800) {
+        setIntroPhase(IntroPhase.TITLE_REVEAL);
+    }
+
+    introAnimId = requestAnimationFrame(introLoop);
+}
+
+function setIntroPhase(phase) {
+    introPhase = phase;
+    const title = document.getElementById('intro-title');
+    const titleSub = document.getElementById('intro-title-sub');
+    const cinText = document.getElementById('intro-cinematic-text');
+    const progContainer = document.getElementById('intro-progress-container');
+    const launchPrompt = document.getElementById('intro-launch-prompt');
+
+    if (phase === IntroPhase.TITLE_REVEAL) {
+        title.classList.add('reveal');
+        titleSub.classList.add('reveal');
+        introPhaseTimers.push(setTimeout(() => setIntroPhase(IntroPhase.CINEMATIC_TEXT), 2500));
+    }
+    else if (phase === IntroPhase.CINEMATIC_TEXT) {
+        introCinematicIdx = 0;
+        showNextCinematicLine();
+    }
+    else if (phase === IntroPhase.LOADING) {
+        cinText.classList.remove('visible');
+        cinText.textContent = '';
+        progContainer.classList.add('visible');
+        // Start actual loading (replaces the old runLoader)
+        startIntroLoading();
+    }
+    else if (phase === IntroPhase.READY) {
+        progContainer.style.opacity = '0.3';
+        const statusEl = document.getElementById('intro-progress-status');
+        statusEl.textContent = 'SYSTEMS ONLINE';
+        statusEl.style.color = '#00ffaa';
+        launchPrompt.classList.add('reveal');
+        // Click/tap/keypress to launch
+        const handler = (e) => {
+            if (!introActive) return;
+            finishIntro();
+            document.removeEventListener('click', handler);
+            document.removeEventListener('touchstart', handler);
+            document.removeEventListener('keydown', handler);
+        };
+        // Small delay so skip button doesn't accidentally trigger
+        introPhaseTimers.push(setTimeout(() => {
+            document.addEventListener('click', handler);
+            document.addEventListener('touchstart', handler);
+            document.addEventListener('keydown', handler);
+        }, 300));
+    }
+}
+
+function showNextCinematicLine() {
+    if (introCinematicIdx >= introCinematicLines.length) {
+        setIntroPhase(IntroPhase.LOADING);
+        return;
+    }
+    const line = introCinematicLines[introCinematicIdx];
+    const cinText = document.getElementById('intro-cinematic-text');
+    cinText.classList.add('visible');
+    // Typewriter effect
+    let charIdx = 0;
+    cinText.innerHTML = '<span class="blink-cursor">_</span>';
+    if (introTypewriterTimer) clearInterval(introTypewriterTimer);
+    introTypewriterTimer = setInterval(() => {
+        if (charIdx < line.text.length) {
+            charIdx++;
+            cinText.innerHTML = line.text.substring(0, charIdx) + '<span class="blink-cursor">_</span>';
+        } else {
+            clearInterval(introTypewriterTimer);
+            introTypewriterTimer = null;
+            // Hold then fade
+            introPhaseTimers.push(setTimeout(() => {
+                cinText.classList.remove('visible');
+                introPhaseTimers.push(setTimeout(() => {
+                    introCinematicIdx++;
+                    showNextCinematicLine();
+                }, 400));
+            }, line.dur));
+        }
+    }, 45);
+}
+
+function startIntroLoading() {
+    const bar = document.getElementById('intro-progress-inner');
+    const pctEl = document.getElementById('intro-progress-pct');
+    const statusEl = document.getElementById('intro-progress-status');
+    introProgress = 0;
+    const statusTexts = ['WARP INITIATED','CALIBRATING...','LOADING ASSETS','SYNCING SHIELDS','ARMING WEAPONS','FINAL CHECKS'];
+    const iv = setInterval(() => {
+        if (!introActive) { clearInterval(iv); return; }
+        introProgress += Math.random() * 8 + 1;
+        if (introProgress >= 100) {
+            introProgress = 100;
+            clearInterval(iv);
+            bar.style.width = '100%';
+            pctEl.textContent = '100%';
+            setTimeout(() => setIntroPhase(IntroPhase.READY), 500);
+            return;
+        }
+        bar.style.width = introProgress + '%';
+        pctEl.textContent = Math.floor(introProgress) + '%';
+        const stIdx = Math.min(Math.floor(introProgress / 18), statusTexts.length - 1);
+        statusEl.textContent = statusTexts[stIdx];
+    }, 80);
+    introLoadCallback = iv;
+}
+
+function skipIntro() {
+    if (!introActive) return;
+    finishIntro();
+}
+
+function finishIntro() {
+    if (!introActive) return;
+    introActive = false;
+    // Clean up timers
+    introPhaseTimers.forEach(t => clearTimeout(t));
+    introPhaseTimers = [];
+    if (introTypewriterTimer) { clearInterval(introTypewriterTimer); introTypewriterTimer = null; }
+    if (introLoadCallback) { clearInterval(introLoadCallback); introLoadCallback = null; }
+    if (introAnimId) cancelAnimationFrame(introAnimId);
+
+    const introEl = document.getElementById('cinematic-intro');
+    introEl.classList.add('fade-out');
+    setTimeout(() => {
+        introEl.style.display = 'none';
+    }, 900);
+
+    // Show main hub and initialize (same as old loader-init callback)
+    document.getElementById('main-hub').style.display = 'flex';
+    gameState = 'MENU';
+    resetDailyMissions();
+    updateDailyMissionsUI();
+    updateAchievementsUI();
+    updateSkinProgressUI();
+    updateEventsUI();
+    updateHubUI();
+    updateGemUI();
+    updateIndividualRewardsUI();
+    updateSkinsUI();
+    checkSkinUnlock();
+    updateRankUI();
+    initSettingsUI();
+
+    // Trigger music init
+    initMusicOnFirstInteraction();
+}
+
 // ============================================
 // MUSIC SYSTEM - Background Music
 // ============================================
@@ -3680,7 +4024,7 @@ function loop(){
 }
 
 // INPUT
-window.addEventListener('resize',()=>{ width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; nebulaCanvas.width=width; nebulaCanvas.height=height; resizeCross(); drawNebula(); });
+window.addEventListener('resize',()=>{ width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; nebulaCanvas.width=width; nebulaCanvas.height=height; resizeCross(); drawNebula(); resizeIntroCanvas(); });
 window.dispatchEvent(new Event('resize'));
 canvas.addEventListener('mousemove',e=>{ mouseX=e.clientX; mouseY=e.clientY; if(gameState==='PLAYING' && player){ player.tx=e.clientX; player.ty=e.clientY-50; } });
 canvas.addEventListener('touchmove',e=>{ e.preventDefault(); if(gameState==='PLAYING' && player){ mouseX=e.touches[0].clientX; mouseY=e.touches[0].clientY; player.tx=e.touches[0].clientX; player.ty=e.touches[0].clientY-65; } },{passive:false});
@@ -3694,22 +4038,8 @@ window.addEventListener('keydown',e=>{
 
 // INIT
 for(let i=0;i<90;i++) stars.push({x:Math.random()*(window.innerWidth||800), y:Math.random()*(window.innerHeight||600), v:Math.random()*2.2+0.8});
-runLoader('loader-init','init-fill',()=>{
-    document.getElementById('main-hub').style.display='flex';
-    gameState='MENU';
-    resetDailyMissions();
-    updateDailyMissionsUI();
-    updateAchievementsUI();
-    updateSkinProgressUI();
-    updateEventsUI();
-    updateHubUI();
-    updateGemUI();
-    updateIndividualRewardsUI();
-    updateSkinsUI();
-    checkSkinUnlock();
-    updateRankUI();
-    initSettingsUI();
-});
+// Launch cinematic intro (replaces old loader-init)
+initIntroCanvas();
 
 // Initialize music on first user interaction
 function initMusicOnFirstInteraction() {
