@@ -81,6 +81,15 @@
         .game-select-card:hover { transform:scale(1.05); border-color:#ff00ff; background:rgba(0,50,100,0.9); }
         .game-select-card.coming-soon { opacity:0.6; border-color:#888; cursor:not-allowed; }
         .game-select-card.coming-soon:hover { transform:none; }
+        .shop-tabs { display: flex; gap: 4px; margin: 8px 0; justify-content: center; flex-wrap: wrap; }
+        .shop-tab { background: rgba(0,30,60,0.7); color: #aaa; border: 1px solid #444; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s; }
+        .shop-tab:hover { border-color: #00d2ff; color: #fff; }
+        .shop-tab.active { background: rgba(0,80,120,0.9); border-color: #00d2ff; color: #fff; }
+        .ability-btn { position: absolute; bottom: 85px; right: 15px; z-index: 55; display: none; pointer-events: all; }
+        .ability-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; border: 2px solid; position: relative; margin-bottom: 6px; transition: 0.2s; }
+        .ability-icon:hover { transform: scale(1.1); }
+        .ability-icon.on-cooldown { opacity: 0.4; cursor: not-allowed; }
+        .ability-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; font-size: 9px; color: #fff; font-weight: bold; }
         .shop-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px; width:90%; max-width:380px; }
         .card { background:rgba(255,255,255,0.05); border:1px solid #444; padding:6px; border-radius:10px; cursor:pointer; transition:0.2s; font-size:11px; position:relative; }
         .card:hover { background:rgba(0,210,255,0.1); border-color:#00d2ff; transform:scale(1.02); }
@@ -279,13 +288,7 @@
 
 <div id="update-log-screen" class="overlay">
     <h1 style="color:#00ffaa;">📜 UPDATE LOG</h1>
-    <div style="width:90%;max-width:600px;margin:10px auto;text-align:right;">
-        <div class="update-item"><div class="update-version">⚡ v10.5 - MEGA UPDATE (Current)</div><div class="update-desc">• 2 אירועים חדשים! DOPPELGANGER + SUPERNOVA!<br>• 15 הישגים חדשים! (סה"כ 310+ הישגים!)<br>• כפתור הגדרות חדש!<br>• CRITICAL HITS!<br>• COMBO METER ויזואלי!<br>• STATS PANEL<br>• AUTO-SAVE כל 30 שניות!<br>• 🎵 מערכת מוזיקת רקע! מוזיקה דינמית לפי מצב המשחק!</div></div>
-        <div class="update-item"><div class="update-version">🌟 v10.0 - MEGA UPDATE</div><div class="update-desc">• 10 אירועים חדשים! STARFALL, INFERNO, CHAIN LIGHTNING, BARRIER, SOUL REAPER, GAMBLER, VORTEX, KING'S BLESSING, PRISM, ABYSS!<br>• 30 הישגים חדשים!<br>• מערכת RANK חדשה! 50 רמות עם בונוסים!<br>• DAILY MISSIONS!</div></div>
-        <div class="update-item"><div class="update-version">🔧 v9.1 - BUG FIX</div><div class="update-desc">• תיקון באג קריסת המשחק</div></div>
-        <div class="update-item"><div class="update-version">🎁 v8.0 - DAILY REWARD</div><div class="update-desc">• פרס יומי + 3 אירועים חדשים</div></div>
-        <div class="update-item"><div class="update-version">🚀 v1.0 - LAUNCH</div><div class="update-desc">• השקה ראשונית! 9 אירועים, 100 הישגים</div></div>
-    </div>
+    <div id="update-log-container" style="width:90%;max-width:600px;margin:10px auto;text-align:right;"></div>
     <button class="btn" onclick="backToHub()" style="margin-bottom:30px;">← BACK TO HUB</button>
 </div>
 
@@ -368,17 +371,13 @@
 <div id="shop-screen" class="overlay">
     <h2 style="color:#00d2ff;font-size:1.3rem;">🚀 GALACTIC DEFENDER - TECH HANGAR</h2>
     <div id="shop-money" style="color:gold;font-size:16px;">CREDITS: 0</div>
-    <div class="shop-grid" id="shop-grid-container"></div>
-    <h3 style="color:#ffaa00;margin-top:20px;">✨ SPECIAL ITEMS ✨</h3>
-    <div class="shop-grid" style="margin-top:10px;">
-        <div class="card tooltip" onclick="buySpecialItem('stardust')"><div style="font-size:20px;">⭐</div><div>STARDUST (One-Time)</div><div style="color:#ffaa00;">+10% ALL STATS</div><div style="color:gold;">5000c</div><div class="tooltip-text">מגדיל את כל הסטטים ב-10% לצמיתות! ניתן לקנות פעם אחת בלבד.</div></div>
-        <div class="card tooltip" onclick="buySpecialItem('guardian')"><div style="font-size:20px;">🛡️</div><div>GUARDIAN ANGEL (Limited)</div><div style="color:#ffaa00;">חסינות למוות פעם אחת</div><div style="color:gold;">3000c</div><div style="font-size:9px;color:#aaa;">נותרו: <span id="guardian-count">3</span>/3</div><div class="tooltip-text">מעניק חסינות למוות פעם אחת. ניצל אותך אוטומטית!</div></div>
-        <div class="card tooltip" onclick="buySpecialItem('powercore')"><div style="font-size:20px;">⚡</div><div>POWER CORE (Infinite)</div><div style="color:#ffaa00;">+5% DAMAGE</div><div style="color:gold;">2000c</div><div style="font-size:9px;color:#aaa;">ניתן לקנות עד 20 פעמים</div><div class="tooltip-text">מגדיל את הנזק ב-5% לצמיתות. ניתן לקנות עד 20 פעמים.</div></div>
-        <div class="card tooltip" onclick="buySpecialItem('cosmic')"><div style="font-size:20px;">🌟</div><div>COSMIC ESSENCE (Limited)</div><div style="color:#ffaa00;">+3% FIRE RATE</div><div style="color:gold;">1500c</div><div style="font-size:9px;color:#aaa;">ניתן לקנות עד 15 פעמים</div><div class="tooltip-text">מגדיל את מהירות הירי ב-3% לצמיתות. ניתן לקנות עד 15 פעמים.</div></div>
-        <div class="card tooltip" onclick="buySpecialItem('ironwill')"><div style="font-size:20px;">🛡️</div><div>IRON WILL (One-Time)</div><div style="color:#ffaa00;">50% DAMAGE REDUCTION</div><div style="color:gold;">5000c</div><div class="tooltip-text">מקנה 50% חסינות לנזק לצמיתות! מחצית מהנזק שיתקבל.</div></div>
-        <div class="card tooltip" onclick="buySpecialItem('timedistortion')"><div style="font-size:20px;">⏰</div><div>TIME DISTORTION (One-Time)</div><div style="color:#ffaa00;">30% SLOW ENEMIES</div><div style="color:gold;">8000c</div><div class="tooltip-text">מאט את כל האויבים ב-30% לצמיתות!</div></div>
-        <div class="card tooltip" onclick="buySpecialItem('crystalheart')"><div style="font-size:20px;">💎</div><div>CRYSTAL HEART (One-Time)</div><div style="color:#ffaa00;">2x GEMSTONES</div><div style="color:gold;">10000c</div><div class="tooltip-text">מכפיל את כל ה-GEMSTONES שיתקבלו בעתיד ב-2!</div></div>
+    <div class="shop-tabs">
+        <button class="shop-tab active" onclick="switchShopTab('weapons')">🔫 Weapons</button>
+        <button class="shop-tab" onclick="switchShopTab('shields')">🛡️ Shields</button>
+        <button class="shop-tab" onclick="switchShopTab('special')">✨ Special Abilities</button>
     </div>
+    <div class="shop-grid" id="shop-grid-container"></div>
+    <div id="shop-special-section"></div>
     <button class="btn" onclick="closeShop()" style="margin-bottom:30px;">← BACK</button>
     <div class="reset-section" style="margin-top:15px;margin-bottom:30px;">
         <button class="btn btn-danger" style="padding:5px 15px;font-size:10px;" onclick="confirmReset()">🔄 RESET UPGRADES (Refund)</button>
@@ -416,6 +415,7 @@
 <div id="wave-banner"></div>
 <div id="event-banner"></div>
 <div id="od-btn" onclick="activateOverdrive()">OVER<br>DRIVE</div>
+<div id="ability-btns" class="ability-btn"></div>
 <button id="pause-btn" onclick="togglePause()">⏸</button>
 <div id="achievement-popup" class="achievement-popup-fixed">
     <div class="title">🏆 ACHIEVEMENT UNLOCKED</div>
@@ -854,6 +854,291 @@ let guardianAngelUsed = false;
 let damageReduction = ironWillPurchased ? 0.5 : 1;
 let enemySlow = timeDistortionPurchased ? 0.7 : 1;
 let gemMultiplier = crystalHeartPurchased ? 2 : 1;
+
+// ============================================
+// RARE SPECIAL ABILITIES SYSTEM
+// ============================================
+let currentShopTab = 'weapons';
+
+const RARE_ABILITIES = {
+    shockwave: {
+        id: 'shockwave', name: '💥 SHOCKWAVE BLAST', icon: '💥',
+        desc: 'AoE push destroying nearby projectiles and enemies in a radius',
+        cost: 5000, cooldown: 30000, category: 'weapons',
+        unlockReq: () => bossesKilled >= 10,
+        unlockDesc: 'Defeat 10 bosses',
+        purchased: false, lastUsed: 0, active: false
+    },
+    regenAura: {
+        id: 'regenAura', name: '💚 REGENERATION AURA', icon: '💚',
+        desc: 'Passive HP regeneration (+1 HP every 5 seconds)',
+        cost: 8000, cooldown: 0, category: 'shields',
+        unlockReq: () => wave >= 25,
+        unlockDesc: 'Reach wave 25',
+        purchased: false, lastUsed: 0, active: false
+    },
+    timeSlow: {
+        id: 'timeSlow', name: '👻 TIME SLOW/PHASE', icon: '👻',
+        desc: 'Become intangible for 3 seconds, phasing through enemies and projectiles',
+        cost: 6000, cooldown: 45000, category: 'shields',
+        unlockReq: () => perfectWavesCount >= 5,
+        unlockDesc: 'Survive 5 boss fights without taking damage (5 perfect waves)',
+        purchased: false, lastUsed: 0, active: false
+    },
+    gravityBomb: {
+        id: 'gravityBomb', name: '🌀 GRAVITY BOMB', icon: '🌀',
+        desc: 'Pulls all enemies to a central point then explodes dealing massive damage',
+        cost: 7000, cooldown: 35000, category: 'weapons',
+        unlockReq: () => (parseInt(localStorage.getItem('eliteDropsCollected')) || 0) >= 3,
+        unlockDesc: 'Collect 3 rare drops from elite enemies',
+        purchased: false, lastUsed: 0, active: false
+    },
+    lightningStrike: {
+        id: 'lightningStrike', name: '⚡ LIGHTNING STRIKE', icon: '⚡',
+        desc: 'Instantly kills a random enemy on screen',
+        cost: 5500, cooldown: 45000, category: 'weapons',
+        unlockReq: () => wave >= 30,
+        unlockDesc: 'Reach wave 30',
+        purchased: false, lastUsed: 0, active: false
+    }
+};
+
+// Load purchased states
+for(let key of Object.keys(RARE_ABILITIES)){
+    RARE_ABILITIES[key].purchased = localStorage.getItem('rareAbility_'+key) === 'true';
+}
+
+// Ability visual state
+let shockwaveActive = false;
+let shockwaveTimer = 0;
+let shockwaveRadius = 0;
+let timeSlowActive = false;
+let timeSlowTimer = 0;
+let gravityBombActive = false;
+let gravityBombTimer = 0;
+let gravityBombCenter = {x:0, y:0};
+let gravityBombPhase = 0; // 0=pull, 1=exploded
+let regenAuraTimer = 0;
+let lightningStrikeEffect = null; // {x, y, timer}
+
+function buyRareAbility(id){
+    const ability = RARE_ABILITIES[id];
+    if(!ability) return;
+    if(ability.purchased){
+        showCustomAlert(`${ability.icon} ${ability.name} already purchased!`);
+        return;
+    }
+    if(!ability.unlockReq()){
+        showCustomAlert(`🔒 ${ability.name} is LOCKED!\nRequirement: ${ability.unlockDesc}`);
+        return;
+    }
+    if(totalCoins < ability.cost){
+        showCustomAlert(`Not enough credits! Need ${ability.cost}c, you have ${totalCoins}c`);
+        return;
+    }
+    totalCoins -= ability.cost;
+    ability.purchased = true;
+    localStorage.setItem('rareAbility_'+id, 'true');
+    localStorage.setItem('totalCoins', totalCoins);
+    showCustomAlert(`${ability.icon} ${ability.name} PURCHASED!\n${ability.desc}`);
+    showNotification(`${ability.icon} ${ability.name} acquired!`, 'success');
+    updateShopUI();
+    checkAchievements();
+}
+
+function activateRareAbility(id){
+    const ability = RARE_ABILITIES[id];
+    if(!ability || !ability.purchased || gameState !== 'PLAYING') return;
+    const now = Date.now();
+    if(ability.cooldown > 0 && now - ability.lastUsed < ability.cooldown) return;
+    ability.lastUsed = now;
+
+    if(id === 'shockwave'){
+        shockwaveActive = true;
+        shockwaveTimer = Date.now() + 800;
+        shockwaveRadius = 0;
+        // Destroy nearby enemies and projectiles
+        let radius = 200;
+        for(let i = enemies.length-1; i >= 0; i--){
+            let e = enemies[i];
+            if(player && Math.hypot(e.x - player.x, e.y - player.y) < radius){
+                let pointBonus = e.isBoss ? 9000 : 3500 * combo;
+                pointBonus *= skinCreditMultiplier;
+                score += pointBonus; kills++; waveKills++;
+                if(e.isBoss) bossesKilled++;
+                for(let k=0;k<15;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#ff8800',0.9));
+                enemies.splice(i,1);
+            }
+        }
+        if(boss && player && Math.hypot(boss.x - player.x, boss.y - player.y) < radius){
+            boss.hp -= 500;
+            if(boss.hp <= 0){ boss = null; bossesKilled++; }
+        }
+        eBullets.length = 0;
+        if(player && player.x && player.y) floats.push({txt:'💥 SHOCKWAVE!',x:player.x-60,y:player.y-40,l:1.5,c:'#ff8800',size:24});
+        showNotification('💥 Shockwave Blast activated!', 'success');
+    }
+    else if(id === 'regenAura'){
+        // Passive - no activation needed, handled in game loop
+        showCustomAlert('💚 Regeneration Aura is always active! +1 HP every 5 seconds.');
+    }
+    else if(id === 'timeSlow'){
+        timeSlowActive = true;
+        timeSlowTimer = Date.now() + 3000;
+        if(player) player.invincibleTimer = 180; // ~3 seconds at 60fps
+        if(player && player.x && player.y) floats.push({txt:'👻 PHASE MODE!',x:player.x-50,y:player.y-40,l:1.5,c:'#aa66ff',size:24});
+        showNotification('👻 Time Slow/Phase activated! Intangible for 3 seconds!', 'success');
+    }
+    else if(id === 'gravityBomb'){
+        gravityBombActive = true;
+        gravityBombTimer = Date.now() + 3000;
+        gravityBombCenter = player ? {x: player.x, y: player.y} : {x: width/2, y: height/2};
+        gravityBombPhase = 0;
+        if(player && player.x && player.y) floats.push({txt:'🌀 GRAVITY BOMB!',x:player.x-60,y:player.y-40,l:1.5,c:'#4400aa',size:24});
+        showNotification('🌀 Gravity Bomb activated! Enemies pulled to center!', 'success');
+    }
+    else if(id === 'lightningStrike'){
+        if(enemies.length > 0){
+            let targetIdx = Math.floor(Math.random() * enemies.length);
+            let target = enemies[targetIdx];
+            lightningStrikeEffect = {x: target.x, y: target.y, timer: Date.now() + 600};
+            let pointBonus = target.isBoss ? 50000 : 5000 * combo;
+            pointBonus *= skinCreditMultiplier;
+            score += pointBonus; kills++; waveKills++;
+            if(target.isBoss){ bossesKilled++; boss = null; }
+            for(let k=0;k<25;k++) particles.push(new Particle(target.x,target.y,(Math.random()-0.5)*15,(Math.random()-0.5)*15,'#ffff00',1));
+            enemies.splice(targetIdx, 1);
+            if(player && player.x && player.y) floats.push({txt:'⚡ LIGHTNING STRIKE!',x:target.x-60,y:target.y-40,l:1.5,c:'#ffff00',size:24});
+            showNotification('⚡ Lightning Strike! Enemy destroyed!', 'success');
+        } else {
+            ability.lastUsed = 0; // Refund cooldown if no enemies
+            showNotification('⚡ No enemies to strike!', 'warning');
+        }
+    }
+    updateAbilityButtons();
+}
+
+function updateAbilityButtons(){
+    const container = document.getElementById('ability-btns');
+    if(!container) return;
+    if(gameState !== 'PLAYING'){
+        container.style.display = 'none';
+        return;
+    }
+    let html = '';
+    let hasAny = false;
+    const now = Date.now();
+    for(let key of Object.keys(RARE_ABILITIES)){
+        const ab = RARE_ABILITIES[key];
+        if(!ab.purchased || ab.cooldown === 0) continue; // Skip passive abilities
+        hasAny = true;
+        const cdRemaining = Math.max(0, ab.cooldown - (now - ab.lastUsed));
+        const onCooldown = cdRemaining > 0;
+        const cdSec = Math.ceil(cdRemaining / 1000);
+        const bgColor = key === 'shockwave' ? '#ff8800' : key === 'timeSlow' ? '#aa66ff' : key === 'gravityBomb' ? '#4400aa' : '#ffff00';
+        html += `<div class="ability-icon ${onCooldown ? 'on-cooldown' : ''}" style="border-color:${bgColor};background:rgba(0,0,0,0.6);" onclick="activateRareAbility('${key}')">
+            ${ab.icon}
+            ${onCooldown ? `<div class="ability-cooldown-overlay">${cdSec}s</div>` : ''}
+        </div>`;
+    }
+    container.innerHTML = html;
+    container.style.display = hasAny ? 'block' : 'none';
+}
+
+// ============================================
+// DYNAMIC UPDATE LOG SYSTEM
+// ============================================
+let updateLogData = [
+    {
+        version: 'v2.0',
+        date: new Date().toLocaleDateString(),
+        changes: [
+            'Site fixed and deployed',
+            'Added 5 new rare abilities: Shockwave Blast, Regeneration Aura, Time Slow/Phase, Gravity Bomb, Lightning Strike',
+            'Shop restructured into 3 categories: Weapons, Shields, Special Abilities',
+            'Dynamic update log system implemented'
+        ]
+    },
+    {
+        version: 'v10.5',
+        date: '',
+        changes: [
+            '2 new events! DOPPELGANGER + SUPERNOVA!',
+            '15 new achievements! (310+ total!)',
+            'Settings button!',
+            'CRITICAL HITS!',
+            'COMBO METER visual!',
+            'STATS PANEL',
+            'AUTO-SAVE every 30 seconds!',
+            'Background music system! Dynamic music based on game state!'
+        ]
+    },
+    {
+        version: 'v10.0',
+        date: '',
+        changes: [
+            '10 new events! STARFALL, INFERNO, CHAIN LIGHTNING, BARRIER, SOUL REAPER, GAMBLER, VORTEX, KING\'S BLESSING, PRISM, ABYSS!',
+            '30 new achievements!',
+            'RANK system! 50 levels with bonuses!',
+            'DAILY MISSIONS!'
+        ]
+    },
+    {
+        version: 'v9.1',
+        date: '',
+        changes: ['Game crash bug fix']
+    },
+    {
+        version: 'v8.0',
+        date: '',
+        changes: ['Daily reward + 3 new events']
+    },
+    {
+        version: 'v1.0',
+        date: '',
+        changes: ['Initial launch! 9 events, 100 achievements']
+    }
+];
+
+function renderUpdateLog(){
+    const container = document.getElementById('update-log-container');
+    if(!container) return;
+    container.innerHTML = '';
+    for(const entry of updateLogData){
+        const div = document.createElement('div');
+        div.className = 'update-item';
+        let changesHtml = entry.changes.map(c => '• ' + c).join('<br>');
+        div.innerHTML = `<div class="update-version">⚡ ${entry.version}${entry.date ? ' - ' + entry.date : ''}</div><div class="update-desc">${changesHtml}</div>`;
+        container.appendChild(div);
+    }
+}
+
+function addUpdateLogEntry(version, changes){
+    updateLogData.unshift({ version, date: new Date().toLocaleDateString(), changes });
+    renderUpdateLog();
+}
+
+// ============================================
+// SHOP TAB SYSTEM
+// ============================================
+function switchShopTab(tab){
+    currentShopTab = tab;
+    document.querySelectorAll('.shop-tab').forEach(btn => btn.classList.remove('active'));
+    const tabMap = {'weapons':0, 'shields':1, 'special':2};
+    const tabs = document.querySelectorAll('.shop-tab');
+    if(tabs[tabMap[tab]]) tabs[tabMap[tab]].classList.add('active');
+    updateShopUI();
+}
+
+const SPECIAL_ITEMS_DATA = [
+    {id:'stardust', name:'⭐ STARDUST', desc:'+10% ALL STATS', price:5000, category:'weapons', oneTime:true, ownedCheck:()=>stardustPurchased, tooltip:'מגדיל את כל הסטטים ב-10% לצמיתות!'},
+    {id:'guardian', name:'🛡️ GUARDIAN ANGEL', desc:'Death immunity once', price:3000, category:'shields', oneTime:false, ownedCheck:()=>false, tooltip:'מעניק חסינות למוות פעם אחת.', countHtml:()=>`נותרו: ${guardianAngelCount}/3`},
+    {id:'powercore', name:'⚡ POWER CORE', desc:'+5% DAMAGE', price:2000, category:'weapons', oneTime:false, ownedCheck:()=>false, tooltip:'מגדיל את הנזק ב-5% לצמיתות. עד 20 פעמים.', countHtml:()=>`${powerCoreCount}/20`},
+    {id:'cosmic', name:'🌟 COSMIC ESSENCE', desc:'+3% FIRE RATE', price:1500, category:'weapons', oneTime:false, ownedCheck:()=>false, tooltip:'מגדיל את מהירות הירי ב-3% לצמיתות. עד 15 פעמים.', countHtml:()=>`${cosmicEssenceCount}/15`},
+    {id:'ironwill', name:'🛡️ IRON WILL', desc:'50% DAMAGE REDUCTION', price:5000, category:'shields', oneTime:true, ownedCheck:()=>ironWillPurchased, tooltip:'מקנה 50% חסינות לנזק לצמיתות!'},
+    {id:'timedistortion', name:'⏰ TIME DISTORTION', desc:'30% SLOW ENEMIES', price:8000, category:'shields', oneTime:true, ownedCheck:()=>timeDistortionPurchased, tooltip:'מאט את כל האויבים ב-30% לצמיתות!'},
+    {id:'crystalheart', name:'💎 CRYSTAL HEART', desc:'2x GEMSTONES', price:10000, category:'shields', oneTime:true, ownedCheck:()=>crystalHeartPurchased, tooltip:'מכפיל את כל ה-GEMSTONES ב-2!'}
+];
 
 function buySpecialItem(item){
     if(item === 'stardust'){
@@ -1400,6 +1685,7 @@ function openGameSelect(){
 function openUpdateLog(){
     document.getElementById('main-hub').style.display='none';
     document.getElementById('update-log-screen').style.display='flex';
+    renderUpdateLog();
 }
 function backToHub(){
     document.getElementById('main-hub').style.display='flex';
@@ -1444,6 +1730,7 @@ function backToGameSelect(){
         const el=document.getElementById(id);
         if(el) el.style.display='none';
     });
+    document.getElementById('ability-btns').style.display='none';
     document.getElementById('vignette').style.display='none';
     document.getElementById('crosshair').style.display='none';
     document.getElementById('game-select-screen').style.display='flex';
@@ -2791,19 +3078,29 @@ function maxOutUpgrade(type,pricePer){
 }
 function updateShopUI(){
     const container=document.getElementById('shop-grid-container');
+    const specialSection=document.getElementById('shop-special-section');
     if(!container) return;
-    const items=[
-        {id:'fire', name:'🔥 FIRE RATE', level:fireLevel, price:150, type:'fire', infinite:true},
-        {id:'dmg', name:'💥 DAMAGE', level:damageLevel, price:200, type:'dmg', infinite:true},
-        {id:'shield', name:'🛡️ SHIELD', owned:hasShieldUpgrade, price:250, type:'shield'},
-        {id:'drone', name:'🤖 DRONE', level:droneCount, price:500, type:'drone', infinite:true, maxLimit:400},
-        {id:'heal', name:'❤️ REPAIR', price:100, type:'heal'},
-        {id:'spread', name:'🎯 SPREAD', owned:hasSpreadShot, price:350, type:'spread'},
-        {id:'laser', name:'⚡ LASER', owned:hasLaser, price:600, type:'laser'},
-        {id:'bomb', name:'💣 BOMB', level:bombCount, price:300, type:'bomb', infinite:true}
+
+    const upgradeItems=[
+        {id:'fire', name:'🔥 FIRE RATE', level:fireLevel, price:150, type:'fire', infinite:true, category:'weapons'},
+        {id:'dmg', name:'💥 DAMAGE', level:damageLevel, price:200, type:'dmg', infinite:true, category:'weapons'},
+        {id:'shield', name:'🛡️ SHIELD', owned:hasShieldUpgrade, price:250, type:'shield', category:'shields'},
+        {id:'drone', name:'🤖 DRONE', level:droneCount, price:500, type:'drone', infinite:true, maxLimit:400, category:'weapons'},
+        {id:'heal', name:'❤️ REPAIR', price:100, type:'heal', category:'shields'},
+        {id:'spread', name:'🎯 SPREAD', owned:hasSpreadShot, price:350, type:'spread', category:'weapons'},
+        {id:'laser', name:'⚡ LASER', owned:hasLaser, price:600, type:'laser', category:'weapons'},
+        {id:'bomb', name:'💣 BOMB', level:bombCount, price:300, type:'bomb', infinite:true, category:'weapons'}
     ];
+
+    // Filter by tab
+    const tabItems = upgradeItems.filter(it => {
+        if(currentShopTab === 'weapons') return it.category === 'weapons';
+        if(currentShopTab === 'shields') return it.category === 'shields';
+        return false; // special tab has no regular items
+    });
+
     container.innerHTML='';
-    for(const it of items){
+    for(const it of tabItems){
         const card=document.createElement('div');
         card.className='card tooltip';
         if(it.owned===true) card.classList.add('cant-afford');
@@ -2831,16 +3128,126 @@ function updateShopUI(){
         }
         container.appendChild(card);
     }
+
+    // Build special items / abilities section based on tab
+    if(specialSection){
+        let specialHtml = '';
+        if(currentShopTab === 'weapons'){
+            // Special items for weapons tab
+            const weaponsSpecial = SPECIAL_ITEMS_DATA.filter(s => s.category === 'weapons');
+            specialHtml += '<h3 style="color:#ffaa00;margin-top:15px;">✨ SPECIAL ITEMS ✨</h3><div class="shop-grid" style="margin-top:8px;">';
+            for(const si of weaponsSpecial){
+                const owned = si.ownedCheck();
+                const countInfo = si.countHtml ? `<div style="font-size:9px;color:#aaa;">${si.countHtml()}</div>` : '';
+                specialHtml += `<div class="card tooltip ${owned?'cant-afford':''}" onclick="${owned?'':`buySpecialItem('${si.id}')`}">
+                    <div style="font-size:14px;">${si.name}</div>
+                    <div style="color:#ffaa00;font-size:10px;">${si.desc}</div>
+                    <div style="color:gold;">${formatNumber(si.price)}c</div>
+                    ${countInfo}
+                    <div class="tooltip-text">${si.tooltip}</div>
+                </div>`;
+            }
+            // Rare abilities for weapons tab
+            const weaponsAbilities = Object.values(RARE_ABILITIES).filter(a => a.category === 'weapons');
+            if(weaponsAbilities.length > 0){
+                specialHtml += '</div><h3 style="color:#f54242;margin-top:15px;">🔥 RARE ABILITIES 🔥</h3><div class="shop-grid" style="margin-top:8px;">';
+                for(const ab of weaponsAbilities){
+                    const unlocked = ab.unlockReq();
+                    const purchased = ab.purchased;
+                    const canAfford = totalCoins >= ab.cost;
+                    specialHtml += `<div class="card tooltip ${purchased?'cant-afford':''} rarity-legendary" onclick="${purchased?'':`buyRareAbility('${ab.id}')`}">
+                        <div style="font-size:14px;">${ab.icon}</div>
+                        <div style="font-size:10px;">${ab.name.replace(ab.icon+' ','')}</div>
+                        <div style="color:#ffaa00;font-size:9px;">${ab.desc}</div>
+                        <div style="color:gold;">${formatNumber(ab.cost)}c</div>
+                        <div style="font-size:8px;color:${unlocked?'#00ffaa':'#ff4444'};">${purchased?'✅ OWNED':unlocked?'🔓 UNLOCKED':'🔒 '+ab.unlockDesc}</div>
+                        ${!unlocked && !purchased ? `<div style="font-size:8px;color:#ff4444;">🔒 LOCKED</div>` : ''}
+                        <div class="tooltip-text">Cooldown: ${ab.cooldown/1000}s. ${ab.unlockDesc}</div>
+                    </div>`;
+                }
+            }
+            specialHtml += '</div>';
+        }
+        else if(currentShopTab === 'shields'){
+            // Special items for shields tab
+            const shieldsSpecial = SPECIAL_ITEMS_DATA.filter(s => s.category === 'shields');
+            specialHtml += '<h3 style="color:#ffaa00;margin-top:15px;">✨ SPECIAL ITEMS ✨</h3><div class="shop-grid" style="margin-top:8px;">';
+            for(const si of shieldsSpecial){
+                const owned = si.ownedCheck();
+                const countInfo = si.countHtml ? `<div style="font-size:9px;color:#aaa;">${si.countHtml()}</div>` : '';
+                specialHtml += `<div class="card tooltip ${owned?'cant-afford':''}" onclick="${owned?'':`buySpecialItem('${si.id}')`}">
+                    <div style="font-size:14px;">${si.name}</div>
+                    <div style="color:#ffaa00;font-size:10px;">${si.desc}</div>
+                    <div style="color:gold;">${formatNumber(si.price)}c</div>
+                    ${countInfo}
+                    <div class="tooltip-text">${si.tooltip}</div>
+                </div>`;
+            }
+            // Rare abilities for shields tab
+            const shieldsAbilities = Object.values(RARE_ABILITIES).filter(a => a.category === 'shields');
+            if(shieldsAbilities.length > 0){
+                specialHtml += '</div><h3 style="color:#f54242;margin-top:15px;">🔥 RARE ABILITIES 🔥</h3><div class="shop-grid" style="margin-top:8px;">';
+                for(const ab of shieldsAbilities){
+                    const unlocked = ab.unlockReq();
+                    const purchased = ab.purchased;
+                    specialHtml += `<div class="card tooltip ${purchased?'cant-afford':''} rarity-legendary" onclick="${purchased?'':`buyRareAbility('${ab.id}')`}">
+                        <div style="font-size:14px;">${ab.icon}</div>
+                        <div style="font-size:10px;">${ab.name.replace(ab.icon+' ','')}</div>
+                        <div style="color:#ffaa00;font-size:9px;">${ab.desc}</div>
+                        <div style="color:gold;">${formatNumber(ab.cost)}c</div>
+                        <div style="font-size:8px;color:${unlocked?'#00ffaa':'#ff4444'};">${purchased?'✅ OWNED':unlocked?'🔓 UNLOCKED':'🔒 '+ab.unlockDesc}</div>
+                        ${!unlocked && !purchased ? `<div style="font-size:8px;color:#ff4444;">🔒 LOCKED</div>` : ''}
+                        <div class="tooltip-text">${ab.cooldown>0?'Cooldown: '+(ab.cooldown/1000)+'s. ':''} ${ab.unlockDesc}</div>
+                    </div>`;
+                }
+            }
+            specialHtml += '</div>';
+        }
+        else if(currentShopTab === 'special'){
+            // All special/ultimate abilities
+            specialHtml = '<h3 style="color:#f542d1;margin-top:15px;">🌟 ALL SPECIAL ABILITIES 🌟</h3><div class="shop-grid" style="margin-top:8px;">';
+            for(const ab of Object.values(RARE_ABILITIES)){
+                const unlocked = ab.unlockReq();
+                const purchased = ab.purchased;
+                specialHtml += `<div class="card tooltip ${purchased?'cant-afford':''} rarity-mythic" onclick="${purchased?'':`buyRareAbility('${ab.id}')`}">
+                    <div style="font-size:14px;">${ab.icon}</div>
+                    <div style="font-size:10px;">${ab.name.replace(ab.icon+' ','')}</div>
+                    <div style="color:#ffaa00;font-size:9px;">${ab.desc}</div>
+                    <div style="color:gold;">${formatNumber(ab.cost)}c</div>
+                    <div style="font-size:8px;color:${unlocked?'#00ffaa':'#ff4444'};">${purchased?'✅ OWNED':unlocked?'🔓 UNLOCKED':'🔒 '+ab.unlockDesc}</div>
+                    ${!unlocked && !purchased ? `<div style="font-size:8px;color:#ff4444;">🔒 LOCKED</div>` : ''}
+                    <div class="tooltip-text">${ab.cooldown>0?'Cooldown: '+(ab.cooldown/1000)+'s. ':''}Category: ${ab.category}. ${ab.unlockDesc}</div>
+                </div>`;
+            }
+            // Also show all special items
+            specialHtml += '</div><h3 style="color:#ffaa00;margin-top:15px;">✨ ALL SPECIAL ITEMS ✨</h3><div class="shop-grid" style="margin-top:8px;">';
+            for(const si of SPECIAL_ITEMS_DATA){
+                const owned = si.ownedCheck();
+                const countInfo = si.countHtml ? `<div style="font-size:9px;color:#aaa;">${si.countHtml()}</div>` : '';
+                specialHtml += `<div class="card tooltip ${owned?'cant-afford':''}" onclick="${owned?'':`buySpecialItem('${si.id}')`}">
+                    <div style="font-size:14px;">${si.name}</div>
+                    <div style="color:#ffaa00;font-size:10px;">${si.desc}</div>
+                    <div style="color:gold;">${formatNumber(si.price)}c</div>
+                    ${countInfo}
+                    <div class="tooltip-text">${si.tooltip}</div>
+                </div>`;
+            }
+            specialHtml += '</div>';
+        }
+        specialSection.innerHTML = specialHtml;
+    }
+
     document.getElementById('shop-money').innerHTML="CREDITS: "+formatNumber(totalCoins);
-    document.getElementById('guardian-count').innerText = guardianAngelCount;
 }
-function openShop(){ 
-    document.getElementById('start-screen').style.display='none'; 
+function openShop(){
+    document.getElementById('start-screen').style.display='none';
     document.getElementById('shop-screen').style.display='flex';
-    updateShopUI(); 
+    currentShopTab = 'weapons';
+    document.querySelectorAll('.shop-tab').forEach((btn,i) => btn.classList.toggle('active', i===0));
+    updateShopUI();
 }
-function closeShop(){ 
-    document.getElementById('shop-screen').style.display='none'; 
+function closeShop(){
+    document.getElementById('shop-screen').style.display='none';
     document.getElementById('start-screen').style.display='flex';
 }
 
@@ -3074,6 +3481,10 @@ function startGame(){
     starfallActive=false;starfallStars=[];infernoActive=false;chainLightningActive=false;barrierActive=false;barrierHp=0;
     soulReaperActive=false;soulReaperSoul=null;gamblerActive=false;vortexActive=false;kingsBlessingActive=false;prismActive=false;abyssActive=false;
     doppelgangerActive=false;doppelgangerClone=null;supernovaActive=false;
+    shockwaveActive=false;shockwaveTimer=0;shockwaveRadius=0;
+    timeSlowActive=false;timeSlowTimer=0;
+    gravityBombActive=false;gravityBombTimer=0;gravityBombPhase=0;
+    regenAuraTimer=0;lightningStrikeEffect=null;
     blackHolePieces=0; eventCooldown=0;
     startTime=Date.now();
     enemies=[];bullets=[];eBullets=[];particles=[];items=[];floats=[];boss=null;activePowerUps={};
@@ -3082,6 +3493,7 @@ function startGame(){
     document.getElementById('ascend-screen').style.display='none';
     ['ui-hud','score-hud','combo-small','powerup-bar','pause-btn','game-timer','rank-badge','combo-meter'].forEach(id=>document.getElementById(id).style.display='block');
     document.getElementById('od-btn').style.display='none';
+    document.getElementById('ability-btns').style.display='none';
     document.getElementById('crosshair').style.display='block';
     startWave(1);
     
@@ -3126,6 +3538,7 @@ function quitToMenu(){
         const el=document.getElementById(id);
         if(el) el.style.display='none';
     });
+    document.getElementById('ability-btns').style.display='none';
     document.getElementById('vignette').style.display='none';
     document.getElementById('crosshair').style.display='none';
     document.getElementById('main-hub').style.display='flex';
@@ -3193,6 +3606,7 @@ function gameOver(){
     if(timerInterval) clearInterval(timerInterval);
     if(animationId) cancelAnimationFrame(animationId);
     ['ui-hud','score-hud','od-btn','combo-small','pause-btn','powerup-bar','boss-warning','wave-banner','event-banner','ascend-screen','game-timer','rank-badge','combo-meter'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('ability-btns').style.display='none';
     document.getElementById('vignette').style.display='none';
     document.getElementById('game-over').style.display='flex';
     const isNew=score>=hiScore&&score>0;
@@ -3448,7 +3862,7 @@ function loop(){
         }
 
         for(let i=0;i<meteors.length;i++){ meteors[i].update(); meteors[i].draw();
-            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && Math.hypot(meteors[i].x-player.x,meteors[i].y-player.y)<meteors[i].radius+player.r){
+            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && !timeSlowActive && Math.hypot(meteors[i].x-player.x,meteors[i].y-player.y)<meteors[i].radius+player.r){
                 let dmg = 15 * damageReduction;
                 health-=dmg; if(settings.shake) shake=15; player.invincibleTimer=40; sfxHit(); waveNoDamage=false; meteors.splice(i,1); i--; if(health<=0){gameOver();return;}
                 if(barrierActive){
@@ -3462,7 +3876,7 @@ function loop(){
         }
 
         if(guardian){ guardian.update(); guardian.draw();
-            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && Math.hypot(guardian.x-player.x,guardian.y-player.y)<guardian.r+player.r){
+            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && !timeSlowActive && Math.hypot(guardian.x-player.x,guardian.y-player.y)<guardian.r+player.r){
                 let dmg = 40 * damageReduction;
                 health-=dmg; if(settings.shake) shake=20; player.invincibleTimer=60; sfxHit(); waveNoDamage=false; if(health<=0){gameOver();return;}
                 if(barrierActive){
@@ -3480,7 +3894,7 @@ function loop(){
 
         const preCollide=[];
         for(const e of enemies){ e.update(); e.draw(); let dead=false;
-            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && Math.hypot(e.x-player.x,e.y-player.y)<e.r+18 && player.invincibleTimer===0){
+            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && !timeSlowActive && Math.hypot(e.x-player.x,e.y-player.y)<e.r+18 && player.invincibleTimer===0){
                 if(!isOD && !synapseActive){
                     let dmg = e.isBoss?15:8; if(apocalypseActive) dmg*=1.5; if(cosmicCollapseActive) dmg*=1.3; if(doomsDayActive) dmg*=0.5;
                     dmg *= damageReduction;
@@ -3525,7 +3939,15 @@ function loop(){
                         xp+=e.isBoss?35:10;
                         if(xp>=100){ xp=0; level++; sfxLevelUp(); floats.push({txt:'▲ RANK UP!',x:player.x-40,y:player.y-25,l:1.5,c:'#00ffaa',size:20}); }
                         odCharge=Math.min(100,odCharge+(e.isBoss?45:3));
-                        if(e.isBoss){ bossesKilled++; boss=null; }
+                        if(e.isBoss){ bossesKilled++; boss=null;
+                            // Elite rare drop for Gravity Bomb unlock
+                            if(Math.random() < 0.3){
+                                let eliteDrops = parseInt(localStorage.getItem('eliteDropsCollected')||0)+1;
+                                localStorage.setItem('eliteDropsCollected', eliteDrops);
+                                if(player && player.x && player.y) floats.push({txt:'⭐ ELITE DROP! ('+eliteDrops+'/3)',x:e.x-50,y:e.y-30,l:1.5,c:'gold',size:16});
+                                showNotification('⭐ Elite drop collected! ('+eliteDrops+'/3)', 'success');
+                            }
+                        }
                         const roll=Math.random();
                         if(roll>0.65) items.push({x:e.x,y:e.y,vy:2,isPowerUp:false});
                         if(roll>0.88) spawnPowerUp(e.x+20,e.y);
@@ -3590,7 +4012,7 @@ function loop(){
         for(const eb of eBullets){ eb.x+=eb.vx||0; eb.y+=eb.vy;
             ctx.fillStyle='#ff0044'; ctx.shadowBlur=7; ctx.beginPath(); ctx.arc(eb.x,eb.y,5,0,Math.PI*2); ctx.fill();
             let keep=true;
-            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && Math.hypot(eb.x-player.x,eb.y-player.y)<22 && player.invincibleTimer===0){
+            if(!voidActive && !primordialRageActive && !chaosRealmActive && !divineActive && !bugEventActive && !stableCycleActive && !frozenTimeActive && !royalBlessingActive && !barrierActive && !timeSlowActive && Math.hypot(eb.x-player.x,eb.y-player.y)<22 && player.invincibleTimer===0){
                 if(!isOD && !synapseActive){ 
                     let dmg = (hasShieldUpgrade?4:9) * damageReduction;
                     health-=dmg; if(settings.shake) shake=10; player.invincibleTimer=22; sfxHit(); waveNoDamage=false; 
@@ -3652,6 +4074,94 @@ function loop(){
 
         tickPowerUps();
 
+        // === RARE ABILITY EFFECTS ===
+        // Regeneration Aura
+        if(RARE_ABILITIES.regenAura.purchased){
+            regenAuraTimer++;
+            if(regenAuraTimer >= 300){ // ~5 seconds at 60fps
+                regenAuraTimer = 0;
+                health = Math.min(maxHealth, health + 1);
+                if(player && player.x && player.y) particles.push(new Particle(player.x, player.y-20, 0, -2, '#00ffaa', 0.6));
+            }
+        }
+        // Shockwave visual
+        if(shockwaveActive && Date.now() < shockwaveTimer){
+            shockwaveRadius += 15;
+            ctx.strokeStyle = `rgba(255,136,0,${1 - shockwaveRadius/300})`;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, shockwaveRadius, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.lineWidth = 1;
+        } else { shockwaveActive = false; shockwaveRadius = 0; }
+        // Time Slow/Phase visual
+        if(timeSlowActive && Date.now() < timeSlowTimer){
+            ctx.strokeStyle = `rgba(170,102,255,${0.3 + Math.sin(Date.now()/100)*0.2})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(player.x, player.y, 40+Math.sin(Date.now()/150)*5, 0, Math.PI*2); ctx.stroke();
+            ctx.lineWidth = 1;
+        } else { timeSlowActive = false; }
+        // Gravity Bomb
+        if(gravityBombActive && Date.now() < gravityBombTimer){
+            const elapsed = gravityBombTimer - Date.now();
+            if(elapsed > 1500){
+                // Pull phase
+                gravityBombPhase = 0;
+                for(let i=0;i<enemies.length;i++){
+                    let e=enemies[i];
+                    let dx=gravityBombCenter.x-e.x, dy=gravityBombCenter.y-e.y;
+                    let dist=Math.hypot(dx,dy);
+                    if(dist>20){ let pull=8; e.x+=dx/dist*pull; e.y+=dy/dist*pull; }
+                }
+                // Visual pull
+                ctx.strokeStyle='rgba(68,0,170,0.6)'; ctx.lineWidth=2;
+                for(let i=0;i<enemies.length;i++){
+                    let e=enemies[i];
+                    ctx.beginPath(); ctx.moveTo(e.x,e.y); ctx.lineTo(gravityBombCenter.x,gravityBombCenter.y); ctx.stroke();
+                }
+                ctx.fillStyle='rgba(68,0,170,0.4)'; ctx.beginPath(); ctx.arc(gravityBombCenter.x,gravityBombCenter.y,30,0,Math.PI*2); ctx.fill();
+            } else if(gravityBombPhase === 0){
+                // Explode!
+                gravityBombPhase = 1;
+                for(let i=enemies.length-1;i>=0;i--){
+                    let e=enemies[i];
+                    let dist=Math.hypot(e.x-gravityBombCenter.x, e.y-gravityBombCenter.y);
+                    if(dist < 300){
+                        let pointBonus = e.isBoss?50000:8000*combo;
+                        pointBonus *= skinCreditMultiplier;
+                        score += pointBonus; kills++; waveKills++;
+                        if(e.isBoss) bossesKilled++;
+                        for(let k=0;k<20;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*15,(Math.random()-0.5)*15,'#4400aa',1));
+                        enemies.splice(i,1);
+                    }
+                }
+                if(boss){
+                    let dist=Math.hypot(boss.x-gravityBombCenter.x,boss.y-gravityBombCenter.y);
+                    if(dist<300){ boss.hp-=1000; if(boss.hp<=0){boss=null;bossesKilled++;} }
+                }
+                if(player && player.x && player.y) floats.push({txt:'🌀 GRAVITY BOMB BOOM!',x:gravityBombCenter.x-70,y:gravityBombCenter.y-40,l:1.5,c:'#4400aa',size:24});
+                for(let i=0;i<50;i++){const a=i*(Math.PI*2/50);particles.push(new Particle(gravityBombCenter.x,gravityBombCenter.y,Math.cos(a)*10,Math.sin(a)*10,'#aa44ff',1));}
+            }
+            // Explosion visual
+            if(gravityBombPhase === 1){
+                ctx.fillStyle='rgba(170,68,255,0.3)'; ctx.beginPath(); ctx.arc(gravityBombCenter.x,gravityBombCenter.y,300,0,Math.PI*2); ctx.fill();
+            }
+        } else { gravityBombActive = false; gravityBombPhase = 0; }
+        // Lightning Strike visual
+        if(lightningStrikeEffect && Date.now() < lightningStrikeEffect.timer){
+            let lx=lightningStrikeEffect.x, ly=lightningStrikeEffect.y;
+            ctx.strokeStyle='#ffff00'; ctx.lineWidth=3; ctx.shadowBlur=20; ctx.shadowColor='#ffff00';
+            for(let i=0;i<5;i++){
+                ctx.beginPath(); ctx.moveTo(lx,0);
+                let cx=lx, cy=0;
+                for(let j=0;j<8;j++){ cx+=(Math.random()-0.5)*40; cy+=ly/8; ctx.lineTo(cx,cy); }
+                ctx.lineTo(lx,ly); ctx.stroke();
+            }
+            ctx.lineWidth=1; ctx.shadowBlur=0;
+        } else { lightningStrikeEffect = null; }
+        // Update ability buttons
+        updateAbilityButtons();
+
         if(Date.now()>comboTimer && gameState==='PLAYING') combo=1;
         if(isOD && Date.now()>odTimer){ isOD=false; odCharge=0; document.getElementById('od-btn').style.display='none'; }
         if(odCharge>=100 && !isOD) document.getElementById('od-btn').style.display='flex';
@@ -3690,6 +4200,11 @@ window.addEventListener('keydown',e=>{
     if(e.key==='Escape' && (gameState==='PLAYING'||gameState==='PAUSED')) togglePause();
     if((e.key==='q'||e.key==='Q') && gameState==='PLAYING') useBomb();
     if((e.key==='o'||e.key==='O') && gameState==='PLAYING') activateOverdrive();
+    if(e.key==='1' && gameState==='PLAYING') activateRareAbility('shockwave');
+    if(e.key==='2' && gameState==='PLAYING') activateRareAbility('regenAura');
+    if(e.key==='3' && gameState==='PLAYING') activateRareAbility('timeSlow');
+    if(e.key==='4' && gameState==='PLAYING') activateRareAbility('gravityBomb');
+    if(e.key==='5' && gameState==='PLAYING') activateRareAbility('lightningStrike');
 });
 
 // INIT
