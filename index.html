@@ -643,11 +643,7 @@ function closeSettings(){
     document.getElementById('start-screen').style.display='flex';
 }
 
-// Override showNotification based on settings
-const originalShowNotification = window.showNotification || function(){};
-window.showNotification = function(msg, type){
-    if(settings.notifications) originalShowNotification(msg, type);
-};
+// Notification settings handled inside showNotification()
 
 // ============================================
 // CRITICAL HITS SYSTEM
@@ -664,6 +660,7 @@ function applyCriticalHit(power){
     if(isCriticalHit()){
         criticalHitsCount++;
         totalDamageDealt += power * 2;
+        updateDailyMissionProgress('crit', 1);
         if(player && player.x && player.y) floats.push({txt:'⚡ CRITICAL!', x:player.x-40, y:player.y-50, l:1, c:'#ffaa00', size:20});
         return power * 2;
     }
@@ -694,6 +691,7 @@ function updateComboMeter(){
 // NOTIFICATION SYSTEM
 // ============================================
 function showNotification(message, type = 'info'){
+    if(!settings.notifications) return;
     const area = document.getElementById('notification-area');
     if(!area) return;
     const notif = document.createElement('div');
@@ -740,6 +738,7 @@ function claimDailyReward(){
         const reward = 100 + Math.floor(Math.random() * 400);
         gemstones += reward;
         saveGemstones();
+        updateDailyMissionProgress('gem', reward);
         lastDailyClaim = now;
         dailyClaimCount++;
         localStorage.setItem('lastDailyClaim', now);
@@ -2758,6 +2757,7 @@ function triggerSupernova(){
         if(stableCycleActive) pointBonus*=3;
         if(royalBlessingActive) pointBonus*=3;
         if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
         pointBonus *= skinCreditMultiplier;
         score+=pointBonus; kills++; waveKills++;
         if(e.isBoss) bossesKilled++;
@@ -2786,7 +2786,8 @@ function triggerGuardian(){ if(!canTriggerEvent()) return; guardian=new Guardian
 function triggerCosmicCollapse(){ if(!canTriggerEvent()) return; activeEvent='cosmic'; eventTimer=Date.now()+20000; cosmicCollapseActive=true; cosmicCollapseCount++; totalEventsTriggered++; sfxCosmic(); const banner=document.getElementById('event-banner'); banner.innerHTML='🌌 COSMIC COLLAPSE 🌌'; banner.style.display='block'; banner.style.color='#88aaff'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); for(let i=0;i<30;i++) enemies.push(new Enemy()); if(player && player.x && player.y) floats.push({txt:'🌌 COSMIC COLLAPSE!',x:width/2-70,y:height/2-40,l:1.5,c:'#88aaff',size:24}); startEventCooldown(); checkAchievements(); showNotification('🌌 Cosmic Collapse event started! 10x points!', 'event'); }
 function triggerPrimordialRage(){ if(!canTriggerEvent()) return; activeEvent='primordial'; eventTimer=Date.now()+10000; primordialRageActive=true; primordialRageCount++; totalEventsTriggered++; sfxApocalypse(); const banner=document.getElementById('event-banner'); banner.innerHTML='⚡ PRIMORDIAL RAGE ⚡'; banner.style.display='block'; banner.style.color='#ff0000'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player) player.r = 60; if(player && player.x && player.y) floats.push({txt:'⚡ PRIMORDIAL RAGE!',x:width/2-70,y:height/2-40,l:1.5,c:'#ff0000',size:24}); startEventCooldown(); checkAchievements(); showNotification('⚡ Primordial Rage event started! Massive damage!', 'event'); }
 function triggerBlackHole(){ if(!canTriggerEvent()) return; activeEvent='blackhole'; eventTimer=Date.now()+8000; blackHoleActive=true; blackHoleCenter={x:width/2, y:height/2}; totalEventsTriggered++; sfxCosmic(); const banner=document.getElementById('event-banner'); banner.innerHTML='🕳️ BLACK HOLE 🕳️'; banner.style.display='block'; banner.style.color='#4400aa'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); let activations=parseInt(localStorage.getItem('blackHoleActivations')||0)+1; localStorage.setItem('blackHoleActivations',activations); if(player && player.x && player.y) floats.push({txt:'🕳️ BLACK HOLE!',x:width/2-50,y:height/2-40,l:1.5,c:'#4400aa',size:24}); startEventCooldown(); checkAchievements(); showNotification('🕳️ Black Hole event started!', 'event'); }
-function triggerDeathTouch(){ if(!canTriggerEvent()) return; activeEvent='deathtouch'; eventTimer=Date.now()+3000; deathTouchCount++; totalEventsTriggered++; sfxDeathTouch(); const banner=document.getElementById('event-banner'); banner.innerHTML='💀 DEATH\'S TOUCH 💀'; banner.style.display='block'; banner.style.color='#440044'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); let enemiesKilled=0; for(let i=0;i<enemies.length;i++){ let e=enemies[i]; let pointBonus = e.isBoss?90000:3500*combo; if(goldRushActive) pointBonus*=10; if(stableCycleActive) pointBonus*=3; if(royalBlessingActive) pointBonus*=3; if(kingsBlessingActive) pointBonus*=5; score+=pointBonus; kills++; waveKills++; if(e.isBoss) bossesKilled++; enemiesKilled++; for(let k=0;k<20;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*15,(Math.random()-0.5)*15,'#440044',0.9)); } enemies=[]; boss=null; if(player && player.x && player.y) floats.push({txt:`💀 ${enemiesKilled} ENEMIES DIED!`,x:width/2-100,y:height/2-40,l:1.8,c:'#440044',size:28}); startEventCooldown(); checkAchievements(); showNotification(`💀 Death's Touch killed ${enemiesKilled} enemies!`, 'event'); }
+function triggerDeathTouch(){ if(!canTriggerEvent()) return; activeEvent='deathtouch'; eventTimer=Date.now()+3000; deathTouchCount++; totalEventsTriggered++; sfxDeathTouch(); const banner=document.getElementById('event-banner'); banner.innerHTML='💀 DEATH\'S TOUCH 💀'; banner.style.display='block'; banner.style.color='#440044'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); let enemiesKilled=0; for(let i=0;i<enemies.length;i++){ let e=enemies[i]; let pointBonus = e.isBoss?90000:3500*combo; if(goldRushActive) pointBonus*=10; if(stableCycleActive) pointBonus*=3; if(royalBlessingActive) pointBonus*=3; if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2; score+=pointBonus; kills++; waveKills++; if(e.isBoss) bossesKilled++; enemiesKilled++; for(let k=0;k<20;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*15,(Math.random()-0.5)*15,'#440044',0.9)); } enemies=[]; boss=null; if(player && player.x && player.y) floats.push({txt:`💀 ${enemiesKilled} ENEMIES DIED!`,x:width/2-100,y:height/2-40,l:1.8,c:'#440044',size:28}); startEventCooldown(); checkAchievements(); showNotification(`💀 Death's Touch killed ${enemiesKilled} enemies!`, 'event'); }
 function triggerChaosRealm(){ if(!canTriggerEvent()) return; activeEvent='chaos'; eventTimer=Date.now()+12000; chaosRealmActive=true; chaosRealmCount++; totalEventsTriggered++; sfxChaosRealm(); const banner=document.getElementById('event-banner'); banner.innerHTML='🌈 CHAOS REALM 🌈'; banner.style.display='block'; banner.style.color='#ff66ff'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'🌈 CHAOS REALM!',x:width/2-70,y:height/2-40,l:1.5,c:'#ff66ff',size:24}); startEventCooldown(); checkAchievements(); showNotification('🌈 Chaos Realm event started! Rainbow bullets!', 'event'); }
 function triggerReapersCall(){ if(!canTriggerEvent()) return; activeEvent='reaper'; eventTimer=Date.now()+10000; reaperCalls++; totalEventsTriggered++; sfxReaper(); const banner=document.getElementById('event-banner'); banner.innerHTML='💀 REAPER\'S CALL 💀'; banner.style.display='block'; banner.style.color='#880044'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'💀 REAPER\'S CALL!',x:width/2-70,y:height/2-40,l:1.5,c:'#880044',size:24}); startEventCooldown(); checkAchievements(); showNotification('💀 Reaper\'s Call event started!', 'event'); }
 function triggerTimeWarp(){ if(!canTriggerEvent()) return; activeEvent='timewarp'; eventTimer=Date.now()+10000; timeWarps++; totalEventsTriggered++; sfxTimeWarp(); timeWarpActive=true; timeWarpTimer=Date.now()+10000; const banner=document.getElementById('event-banner'); banner.innerHTML='🌀 TIME WARP 🌀'; banner.style.display='block'; banner.style.color='#44aaff'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'🌀 TIME WARP!',x:width/2-60,y:height/2-40,l:1.5,c:'#44aaff',size:24}); startEventCooldown(); checkAchievements(); showNotification('🌀 Time Warp event started! Enemies slowed!', 'event'); }
@@ -2805,7 +2806,7 @@ function triggerLuckyDraw(){ if(!canTriggerEvent()) return; activeEvent='lucky';
 function triggerMysteryBox(){ if(!canTriggerEvent()) return; activeEvent='mystery'; eventTimer=Date.now()+3000; mysteryBoxCount++; totalEventsTriggered++; sfxMystery(); const banner=document.getElementById('event-banner'); banner.innerHTML='🔮 MYSTERY BOX 🔮'; banner.style.display='block'; banner.style.color='#ff88ff'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); const rewards = [ () => { let reward = 500 * gemMultiplier; gemstones += reward; saveGemstones(); return `${reward} GEMSTONES!`; }, () => { let reward = 10000; totalCoins += reward; localStorage.setItem('totalCoins', totalCoins); return `${reward} CREDITS!`; }, () => { bombCount += 5; localStorage.setItem('bombCount', bombCount); return "5 BOMBS!"; }, () => { damageLevel += 2; localStorage.setItem('dmgLevel', damageLevel); return "PERMANENT DAMAGE +2!"; }, () => { fireLevel += 3; localStorage.setItem('fireLevel', fireLevel); return "PERMANENT FIRE RATE +3!"; } ]; const reward = rewards[Math.floor(Math.random() * rewards.length)](); if(player && player.x && player.y) floats.push({txt:`🔮 MYSTERY BOX! ${reward}`,x:width/2-80,y:height/2-40,l:1.5,c:'#ff88ff',size:24}); startEventCooldown(); checkAchievements(); showNotification('🔮 Mystery Box event! Random reward!', 'event'); }
 function triggerDoomsDay(){ if(!canTriggerEvent()) return; activeEvent='doom'; eventTimer=Date.now()+15000; doomsDayCount++; totalEventsTriggered++; sfxDoom(); doomsDayActive=true; const banner=document.getElementById('event-banner'); banner.innerHTML='💀 DOOM\'S DAY 💀'; banner.style.display='block'; banner.style.color='#440000'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'💀 DOOM\'S DAY!',x:width/2-60,y:height/2-40,l:1.5,c:'#440000',size:24}); startEventCooldown(); checkAchievements(); showNotification('💀 Doom\'s Day event started! Enemies weakened!', 'event'); }
 function triggerRoyalBlessing(){ if(!canTriggerEvent()) return; activeEvent='royal'; eventTimer=Date.now()+20000; royalBlessingCount++; totalEventsTriggered++; sfxRoyal(); royalBlessingActive=true; royalBlessingTimer=Date.now()+20000; const banner=document.getElementById('event-banner'); banner.innerHTML='👑 ROYAL BLESSING 👑'; banner.style.display='block'; banner.style.color='#ffdd00'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'👑 ROYAL BLESSING!',x:width/2-60,y:height/2-40,l:1.5,c:'#ffdd00',size:24}); startEventCooldown(); checkAchievements(); showNotification('👑 Royal Blessing event started! 3x everything!', 'event'); }
-function triggerStarfall(){ if(!canTriggerEvent()) return; activeEvent='starfall'; eventTimer=Date.now()+10000; starfallCount++; totalEventsTriggered++; sfxStarfall(); starfallActive=true; starfallTimer=Date.now()+10000; starfallStars = []; const banner=document.getElementById('event-banner'); banner.innerHTML='🌟 STARFALL 🌟'; banner.style.display='block'; banner.style.color='#ffffaa'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); for(let i=0;i<20;i++){ starfallStars.push({x:Math.random()*width, y:-20, size:8+Math.random()*8, value:50+Math.floor(Math.random()*100)}); } if(player && player.x && player.y) floats.push({txt:'🌟 STARFALL!',x:width/2-60,y:height/2-40,l:1.5,c:'#ffffaa',size:24}); showNotification('🌟 STARFALL event started! Catch falling stars!', 'event'); startEventCooldown(); checkAchievements(); }
+function triggerStarfall(){ if(!canTriggerEvent()) return; activeEvent='starfall'; eventTimer=Date.now()+10000; starfallCount++; totalEventsTriggered++; sfxStarfall(); starfallActive=true; starfallTimer=Date.now()+10000; starfallStars = []; const banner=document.getElementById('event-banner'); banner.innerHTML='🌟 STARFALL 🌟'; banner.style.display='block'; banner.style.color='#ffffaa'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); for(let i=0;i<20;i++){ starfallStars.push(new StarfallStar(Math.random()*width, -20, 8+Math.random()*8, 50+Math.floor(Math.random()*100))); } if(player && player.x && player.y) floats.push({txt:'🌟 STARFALL!',x:width/2-60,y:height/2-40,l:1.5,c:'#ffffaa',size:24}); showNotification('🌟 STARFALL event started! Catch falling stars!', 'event'); startEventCooldown(); checkAchievements(); }
 function triggerInferno(){ if(!canTriggerEvent()) return; activeEvent='inferno'; eventTimer=Date.now()+8000; infernoCount++; totalEventsTriggered++; sfxInferno(); infernoActive=true; infernoTimer=Date.now()+8000; const banner=document.getElementById('event-banner'); banner.innerHTML='🔥 INFERNO 🔥'; banner.style.display='block'; banner.style.color='#ff4400'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'🔥 INFERNO!',x:width/2-60,y:height/2-40,l:1.5,c:'#ff4400',size:24}); showNotification('🔥 INFERNO event started! Flames will burn enemies!', 'event'); startEventCooldown(); checkAchievements(); }
 function triggerChainLightning(){ if(!canTriggerEvent()) return; activeEvent='chain'; eventTimer=Date.now()+10000; chainLightningCount++; totalEventsTriggered++; sfxChain(); chainLightningActive=true; chainLightningTimer=Date.now()+10000; const banner=document.getElementById('event-banner'); banner.innerHTML='⚡ CHAIN LIGHTNING ⚡'; banner.style.display='block'; banner.style.color='#ffff00'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'⚡ CHAIN LIGHTNING!',x:width/2-70,y:height/2-40,l:1.5,c:'#ffff00',size:24}); showNotification('⚡ CHAIN LIGHTNING event started! Lightning will chain between enemies!', 'event'); startEventCooldown(); checkAchievements(); }
 function triggerBarrier(){ if(!canTriggerEvent()) return; activeEvent='barrier'; eventTimer=Date.now()+10000; barrierCount++; totalEventsTriggered++; sfxBarrier(); barrierActive=true; barrierTimer=Date.now()+10000; barrierHp = 500; const banner=document.getElementById('event-banner'); banner.innerHTML='🛡️ BARRIER 🛡️'; banner.style.display='block'; banner.style.color='#88aaff'; setTimeout(()=>{if(document.getElementById('event-banner')) document.getElementById('event-banner').style.display='none';},3000); if(player && player.x && player.y) floats.push({txt:'🛡️ BARRIER!',x:width/2-60,y:height/2-40,l:1.5,c:'#88aaff',size:24}); showNotification('🛡️ BARRIER event started! Damage absorption active!', 'event'); startEventCooldown(); checkAchievements(); }
@@ -2998,6 +2999,7 @@ function useBomb(){
             if(stableCycleActive) pointBonus*=3;
             if(royalBlessingActive) pointBonus*=3;
             if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
             pointBonus *= skinCreditMultiplier;
             score+=pointBonus;kills++;
             for(let k=0;k<8;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*10,(Math.random()-0.5)*10,e.color,0.8));
@@ -3013,6 +3015,7 @@ function useBomb(){
             if(stableCycleActive) pointBonus*=3;
             if(royalBlessingActive) pointBonus*=3;
             if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
             pointBonus *= skinCreditMultiplier;
             score+=pointBonus; totalCoins+=5000;
             if(!skinUnlocked){ skinUnlocked=true; localStorage.setItem('skinUnlocked','true'); showAchievementPopup('👑 GUARDIAN DEFEATED', 'Golden skin unlocked!'); }
@@ -3027,6 +3030,7 @@ function useBomb(){
         if(stableCycleActive) pointBonus*=3;
         if(royalBlessingActive) pointBonus*=3;
         if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
         pointBonus *= skinCreditMultiplier;
         score+=pointBonus; totalMeteorsDestroyed++;
         for(let k=0;k<5;k++) particles.push(new Particle(meteors[i].x,meteors[i].y,(Math.random()-0.5)*8,(Math.random()-0.5)*8,'#ff8844',0.8));
@@ -3637,6 +3641,9 @@ function fireBullets(){
     if(royalBlessingActive) power *= 3;
     if(kingsBlessingActive) power *= 5;
     if(prismActive) power *= 1.5;
+    if(doomsDayActive) power *= 2;
+    if(infernoActive) power *= 1.5;
+    if(chainLightningActive) power *= 1.3;
     let color=isOD?'#ff00ff':synapseActive?'#ff66ff':voidActive?'#aa66ff':primordialRageActive?'#ff0000':chaosRealmActive?`hsl(${chaosHue},100%,60%)`:apocalypseActive?'#ff0000':cosmicCollapseActive?'#88aaff':riftActive?'#aa66ff':bugEventActive?'#00ff00':stableCycleActive?'#88aaff':lightningStormActive?'#ffff00':royalBlessingActive?'#ffdd00':kingsBlessingActive?'#ffaa00':prismActive?'#ff88ff':doppelgangerActive?'#ff88ff':isRapid?'#00ffff':'#00d2ff';
     const px=player.x,py=player.y-28;
     if(primordialRageActive){
@@ -3735,6 +3742,193 @@ function loop(){
         }
     }
     
+    // === INFERNO EVENT LOGIC ===
+    if(infernoActive && player && player.x && player.y){
+        if(Math.random() < 0.05){
+            for(let i=0;i<enemies.length;i++){
+                if(Math.random() < 0.3){
+                    let burnDmg = damageLevel * 0.5;
+                    enemies[i].hp -= burnDmg;
+                    particles.push(new Particle(enemies[i].x, enemies[i].y, (Math.random()-0.5)*4, -3, '#ff4400', 0.7));
+                    if(enemies[i].hp <= 0){
+                        let pointBonus = enemies[i].isBoss?1800:70*combo;
+                        pointBonus *= skinCreditMultiplier;
+                        score += pointBonus; kills++; waveKills++;
+                        for(let k=0;k<12;k++) particles.push(new Particle(enemies[i].x,enemies[i].y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,enemies[i].color,0.8));
+                        if(enemies[i].isBoss){ bossesKilled++; boss=null; }
+                        enemies.splice(i,1); i--;
+                    }
+                }
+            }
+        }
+        if(Math.random() < 0.08){
+            particles.push(new Particle(Math.random()*width, height, (Math.random()-0.5)*3, -5-Math.random()*5, '#ff4400', 0.6));
+        }
+    }
+    
+    // === CHAIN LIGHTNING EVENT LOGIC ===
+    if(chainLightningActive && enemies.length > 0 && player && player.x && player.y){
+        if(!window._chainLTCd || Date.now() > window._chainLTCd){
+            window._chainLTCd = Date.now() + 800;
+            let startIdx = Math.floor(Math.random() * enemies.length);
+            let hit = [startIdx];
+            let current = enemies[startIdx];
+            if(current){
+                ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.shadowBlur = 10; ctx.shadowColor = '#ffff00';
+                ctx.beginPath(); ctx.moveTo(current.x, current.y);
+                for(let hop=0; hop<4; hop++){
+                    let nearestDist = 999999, nearestIdx = -1;
+                    for(let j=0;j<enemies.length;j++){
+                        if(hit.includes(j)) continue;
+                        let d = Math.hypot(enemies[j].x-current.x, enemies[j].y-current.y);
+                        if(d < nearestDist && d < 200){ nearestDist=d; nearestIdx=j; }
+                    }
+                    if(nearestIdx === -1) break;
+                    hit.push(nearestIdx);
+                    let next = enemies[nearestIdx];
+                    ctx.lineTo(next.x, next.y);
+                    let chainDmg = damageLevel * 0.8;
+                    next.hp -= chainDmg;
+                    if(next.hp <= 0){
+                        let pointBonus = next.isBoss?1800:70*combo;
+                        pointBonus *= skinCreditMultiplier;
+                        score += pointBonus; kills++; waveKills++;
+                        for(let k=0;k<12;k++) particles.push(new Particle(next.x,next.y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#ffff00',0.8));
+                        if(next.isBoss){ bossesKilled++; boss=null; }
+                        enemies.splice(nearestIdx,1); hit = hit.filter(h => h < enemies.length+1);
+                    }
+                    current = next;
+                }
+                ctx.stroke(); ctx.lineWidth = 1; ctx.shadowBlur = 0;
+            }
+        }
+    }
+    
+    // === CRYSTAL RAIN EVENT LOGIC ===
+    if(crystalRainActive){
+        if(Math.random() < 0.08){
+            crystals.push(new Crystal(Math.random()*width, -20));
+        }
+        for(let i=0;i<crystals.length;i++){
+            crystals[i].update(); crystals[i].draw();
+            if(crystals[i].y > height+30){ crystals.splice(i,1); i--; continue; }
+            if(player && Math.hypot(crystals[i].x-player.x, crystals[i].y-player.y) < crystals[i].r+player.r){
+                let bonus = Math.floor((20 + Math.random()*40) * gemMultiplier);
+                gemstones += bonus; saveGemstones();
+                totalCoins += 50; localStorage.setItem('totalCoins', totalCoins);
+                particles.push(new Particle(crystals[i].x,crystals[i].y,0,0,'#88ffaa',0.7));
+                crystals.splice(i,1); i--;
+            }
+        }
+    }
+    
+    // === VORTEX EVENT LOGIC ===
+    if(vortexActive){
+        ctx.strokeStyle='rgba(68,136,255,0.4)'; ctx.lineWidth=2;
+        for(let ring=0;ring<3;ring++){
+            let r=30+ring*30+Math.sin(Date.now()/200+ring)*8;
+            ctx.beginPath(); ctx.arc(vortexCenter.x,vortexCenter.y,r,0,Math.PI*2); ctx.stroke();
+        }
+        ctx.lineWidth=1;
+        for(let i=0;i<enemies.length;i++){
+            let e=enemies[i];
+            let dx=vortexCenter.x-e.x, dy=vortexCenter.y-e.y, dist=Math.hypot(dx,dy);
+            if(dist<250){ let pull=(250-dist)/250*6; e.x+=dx/dist*pull; e.y+=dy/dist*pull;
+                if(dist<25){
+                    let pointBonus = e.isBoss?5000:200*combo; pointBonus *= skinCreditMultiplier;
+                    score+=pointBonus; kills++; waveKills++;
+                    if(e.isBoss){ bossesKilled++; boss=null; }
+                    for(let k=0;k<10;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*10,(Math.random()-0.5)*10,'#44aaff',0.8));
+                    enemies.splice(i,1); i--;
+                }
+            }
+        }
+    }
+    
+    // === ABYSS EVENT LOGIC ===
+    if(abyssActive){
+        ctx.fillStyle='rgba(34,0,85,0.6)'; ctx.beginPath(); ctx.arc(abyssCenter.x,abyssCenter.y,40+Math.sin(Date.now()/200)*8,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.beginPath(); ctx.arc(abyssCenter.x,abyssCenter.y,20,0,Math.PI*2); ctx.fill();
+        for(let i=0;i<enemies.length;i++){
+            let e=enemies[i];
+            let dx=abyssCenter.x-e.x, dy=abyssCenter.y-e.y, dist=Math.hypot(dx,dy);
+            if(dist<300){ let pull=(300-dist)/300*8; e.x+=dx/dist*pull; e.y+=dy/dist*pull;
+                if(dist<20){
+                    let pointBonus = e.isBoss?8000:300*combo; pointBonus *= skinCreditMultiplier;
+                    score+=pointBonus; kills++; waveKills++;
+                    if(e.isBoss){ bossesKilled++; boss=null; }
+                    for(let k=0;k<15;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#4400aa',0.9));
+                    enemies.splice(i,1); i--;
+                }
+            }
+        }
+    }
+    
+    // === SOUL REAPER EVENT LOGIC ===
+    if(soulReaperActive && soulReaperSoul){
+        soulReaperSoul.y += 0.5;
+        soulReaperSoul.x = width/2 + Math.sin(Date.now()/800) * 100;
+        ctx.fillStyle='#8800aa'; ctx.shadowBlur=20; ctx.shadowColor='#8800aa';
+        ctx.beginPath(); ctx.arc(soulReaperSoul.x, soulReaperSoul.y, 35, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle='#fff'; ctx.font='bold 30px Segoe UI'; ctx.fillText('💀',soulReaperSoul.x-15,soulReaperSoul.y+10);
+        ctx.fillStyle='#222'; ctx.fillRect(soulReaperSoul.x-40, soulReaperSoul.y-50, 80, 6);
+        ctx.fillStyle=`hsl(${(soulReaperSoul.hp/soulReaperSoul.maxHp)*120},100%,50%)`;
+        ctx.fillRect(soulReaperSoul.x-40, soulReaperSoul.y-50, (soulReaperSoul.hp/soulReaperSoul.maxHp)*80, 6);
+        ctx.shadowBlur=0;
+        if(Date.now() % 600 < 20){
+            for(let i=0;i<enemies.length;i++){
+                if(Math.random()<0.3){
+                    let reaperDmg = damageLevel * 1.5;
+                    enemies[i].hp -= reaperDmg;
+                    particles.push(new Particle(enemies[i].x,enemies[i].y,(Math.random()-0.5)*8,-4,'#8800aa',0.8));
+                    if(enemies[i].hp <= 0){
+                        let pointBonus = enemies[i].isBoss?1800:70*combo;
+                        pointBonus *= skinCreditMultiplier;
+                        score += pointBonus; kills++; waveKills++;
+                        for(let k=0;k<12;k++) particles.push(new Particle(enemies[i].x,enemies[i].y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#8800aa',0.8));
+                        if(enemies[i].isBoss){ bossesKilled++; boss=null; }
+                        enemies.splice(i,1); i--;
+                    }
+                }
+            }
+        }
+        if(soulReaperSoul.y > height+100) soulReaperSoul = null;
+    }
+
+    // === LIGHTNING STORM EVENT LOGIC ===
+    if(lightningStormActive && enemies.length > 0 && player && player.x && player.y){
+        if(!window._lsCd || Date.now() > window._lsCd){
+            window._lsCd = Date.now() + 800;
+            let idx = Math.floor(Math.random() * enemies.length);
+            let target = enemies[idx];
+            if(target){
+                let strikeDmg = damageLevel * 1.2;
+                target.hp -= strikeDmg;
+                ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 3; ctx.shadowBlur = 15; ctx.shadowColor = '#ffff00';
+                ctx.beginPath(); ctx.moveTo(target.x, 0); ctx.lineTo(target.x, target.y); ctx.stroke();
+                ctx.lineWidth = 1; ctx.shadowBlur = 0;
+                particles.push(new Particle(target.x, target.y, (Math.random()-0.5)*8, (Math.random()-0.5)*8, '#ffff00', 0.8));
+                if(target.hp <= 0){
+                    let pointBonus = target.isBoss?1800:70*combo;
+                    if(cosmicCollapseActive) pointBonus*=10;
+                    if(goldRushActive) pointBonus*=10;
+                    if(stableCycleActive) pointBonus*=3;
+                    if(royalBlessingActive) pointBonus*=3;
+                    if(kingsBlessingActive) pointBonus*=5;
+                    if(doomsDayActive) pointBonus*=2;
+                    pointBonus *= skinCreditMultiplier;
+                    score += pointBonus; kills++; waveKills++;
+                    for(let k=0;k<12;k++) particles.push(new Particle(target.x,target.y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#ffff00',0.8));
+                    if(target.isBoss){ bossesKilled++; boss=null; }
+                    enemies.splice(idx,1);
+                }
+            }
+        }
+    }
+
+    // === DOOM'S DAY point multiplier ===
+    // (handled via doomsDayActive check in fireBullets damage chain)
+    
     // Update music based on game state
     updateMusicBasedOnGameState();
     
@@ -3768,6 +3962,18 @@ function loop(){
     } else if(infernoActive){ ctx.fillStyle = `rgba(80,30,0,0.3)`; ctx.fillRect(0,0,width,height); drawNebula();
     } else if(chainLightningActive){ ctx.fillStyle = `rgba(80,80,0,0.2)`; ctx.fillRect(0,0,width,height); drawNebula();
     } else if(barrierActive){ ctx.fillStyle = `rgba(68,85,170,0.2)`; ctx.fillRect(0,0,width,height); drawNebula();
+        if(player && player.x && player.y){
+            ctx.save();ctx.translate(player.x,player.y);
+            let pulse = 1 + Math.sin(Date.now()/200)*0.05;
+            ctx.strokeStyle='rgba(100,170,255,0.6)';ctx.lineWidth=3;ctx.shadowBlur=15;ctx.shadowColor='#88aaff';
+            ctx.beginPath();
+            for(let i=0;i<6;i++){let a=Math.PI/3*i-Math.PI/2;let r=40*pulse;let x=Math.cos(a)*r;let y=Math.sin(a)*r;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+            ctx.closePath();ctx.stroke();
+            ctx.fillStyle=`rgba(100,170,255,0.1)`;ctx.fill();
+            ctx.shadowBlur=0;ctx.fillStyle='#222';ctx.fillRect(-30,38,60,4);
+            ctx.fillStyle='#88aaff';ctx.fillRect(-30,38,(barrierHp/500)*60,4);
+            ctx.restore();
+        }
     } else if(soulReaperActive){ ctx.fillStyle = `rgba(68,0,85,0.3)`; ctx.fillRect(0,0,width,height); drawNebula();
     } else if(vortexActive){ ctx.fillStyle = `rgba(34,85,127,0.25)`; ctx.fillRect(0,0,width,height); drawNebula();
     } else if(kingsBlessingActive){ ctx.fillStyle = `rgba(127,100,0,0.2)`; ctx.fillRect(0,0,width,height); drawNebula();
@@ -3785,6 +3991,14 @@ function loop(){
 
     if(gameState==='PLAYING' && player && player.x && player.y){
         player.update(); player.draw(); if(settings.shake) shake*=0.85;
+        // Shadow Clone rendering
+        if(shadowCloneActive && shadowClone){
+            try{ shadowClone.update(); shadowClone.draw(); }catch(e){}
+        }
+        // Doppelganger Clone rendering
+        if(doppelgangerActive && doppelgangerClone){
+            try{ doppelgangerClone.update(); doppelgangerClone.draw(); }catch(e){}
+        }
         if(waveBannerTimer>0){waveBannerTimer--; document.getElementById('wave-banner').style.display='block';}
         else document.getElementById('wave-banner').style.display='none';
         if(bossWarningTimer>0){bossWarningTimer--; document.getElementById('boss-warning').style.display='block';}
@@ -3792,7 +4006,7 @@ function loop(){
 
         if(waveKills>=waveKillGoal && !waveTriggered && !boss && !guardian){
             waveTriggered=true;
-            if(waveNoDamage && wave>1) perfectWavesCount++;
+            if(waveNoDamage && wave>1){ perfectWavesCount++; updateDailyMissionProgress('perfect', 1); }
             setTimeout(()=>{if(gameState==='PLAYING') startWave(wave+1);},1800);
         }
 
@@ -3816,6 +4030,9 @@ function loop(){
         if(bugEventActive) fr*=0.3; if(stableCycleActive) fr*=0.7;
         if(royalBlessingActive) fr*=0.5; if(kingsBlessingActive) fr*=0.3;
         if(prismActive) fr*=0.6;
+        if(doomsDayActive) fr*=0.8;
+        if(infernoActive) fr*=0.7;
+        if(chainLightningActive) fr*=0.8;
         if(doppelgangerActive) fr*=0.8;
         fr /= skinFireRateMultiplier;
         if(Date.now()-lastFire>fr){ fireBullets(); let maxDrones=Math.min(400, droneCount); for(let i=0;i<maxDrones;i++){ const a=(Date.now()/400)+(i*Math.PI*2/maxDrones); if(Math.random()<0.3) bullets.push(new Bullet(player.x+Math.cos(a)*55,player.y+Math.sin(a)*45,Math.ceil(damageLevel*0.55),'#00ffaa')); } }
@@ -3830,6 +4047,7 @@ function loop(){
                 if(stableCycleActive) pointBonus*=3;
                 if(royalBlessingActive) pointBonus*=3;
                 if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
                 pointBonus *= skinCreditMultiplier;
                 score+=pointBonus; kills++; waveKills++;
                 if(e.isBoss) bossesKilled++;
@@ -3853,6 +4071,7 @@ function loop(){
                         if(stableCycleActive) pointBonus*=3;
                         if(royalBlessingActive) pointBonus*=3;
                         if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
                         pointBonus *= skinCreditMultiplier;
                         score+=pointBonus; kills++; waveKills++; xp+=10; if(xp>=100){xp=0;level++;sfxLevelUp();}
                         particles.push(new Particle(enemies[i].x,enemies[i].y,0,0,'#aa66ff',0.8)); enemies.splice(i,1); i--; 
@@ -3933,6 +4152,8 @@ function loop(){
                         if(royalBlessingActive) pointBonus*=3;
                         if(kingsBlessingActive) pointBonus*=5;
                         if(doomsDayActive) pointBonus*=2;
+                        if(doomsDayActive) pointBonus*=2;
+                        if(masqueradeActive && e.disguise === 'item') pointBonus *= 10;
                         pointBonus *= skinCreditMultiplier;
                         score+=pointBonus; kills++; waveKills++;
                         if(synapseActive) synapseKills++;
@@ -3959,6 +4180,7 @@ function loop(){
                         }
                         
                         combo++; if(combo>maxCombo) maxCombo=combo; comboTimer=Date.now()+2200;
+                        updateDailyMissionProgress('kill', 1);
                         updateComboMeter();
                         checkAchievements(); break;
                     }
@@ -3977,6 +4199,7 @@ function loop(){
                     if(stableCycleActive) pointBonus*=3;
                     if(royalBlessingActive) pointBonus*=3;
                     if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
                     pointBonus *= skinCreditMultiplier;
                     score+=pointBonus; totalMeteorsDestroyed++;
                     for(let k=0;k<8;k++) particles.push(new Particle(meteors[m].x,meteors[m].y,(Math.random()-0.5)*8,(Math.random()-0.5)*8,'#ff8844',0.8));
@@ -3995,6 +4218,7 @@ function loop(){
                     if(stableCycleActive) pointBonus*=3;
                     if(royalBlessingActive) pointBonus*=3;
                     if(kingsBlessingActive) pointBonus*=5;
+                        if(doomsDayActive) pointBonus*=2;
                     pointBonus *= skinCreditMultiplier;
                     score+=pointBonus; totalCoins+=5000;
                     if(!skinUnlocked){ skinUnlocked=true; localStorage.setItem('skinUnlocked','true'); showAchievementPopup('👑 GUARDIAN DEFEATED', 'Golden skin unlocked!'); }
@@ -4068,6 +4292,34 @@ function loop(){
 
         for(const p of particles){ p.update(); p.draw(); if(p.l>0) nextParticles.push(p); }
         particles.length=0; particles.push(...nextParticles);
+
+        // Soul Harvest souls rendering
+        if(soulHarvestActive && soulHarvestSouls.length > 0){
+            let nextSouls = [];
+            for(let i=0;i<soulHarvestSouls.length;i++){
+                let s = soulHarvestSouls[i];
+                s.update(); s.draw();
+                let hitEnemy = false;
+                for(let j=0;j<enemies.length;j++){
+                    if(Math.hypot(s.x-enemies[j].x, s.y-enemies[j].y) < enemies[j].r + s.r){
+                        enemies[j].hp -= 3;
+                        for(let k=0;k<5;k++) particles.push(new Particle(s.x,s.y,(Math.random()-0.5)*6,(Math.random()-0.5)*6,'#8800aa',0.6));
+                        if(enemies[j].hp <= 0){
+                            let pointBonus = enemies[j].isBoss?1800:70*combo;
+                            pointBonus *= skinCreditMultiplier;
+                            score += pointBonus; kills++; waveKills++;
+                            for(let k=0;k<12;k++) particles.push(new Particle(enemies[j].x,enemies[j].y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,enemies[j].color,0.8));
+                            if(enemies[j].isBoss){ bossesKilled++; boss=null; }
+                            enemies.splice(j,1); j--;
+                        }
+                        hitEnemy = true; break;
+                    }
+                }
+                if(!hitEnemy && s.life > 0) nextSouls.push(s);
+            }
+            soulHarvestSouls.length = 0;
+            soulHarvestSouls.push(...nextSouls);
+        }
 
         for(const f of floats){ f.y-=1.6; f.l-=0.014; ctx.font=`bold ${f.size||16}px Segoe UI`; ctx.globalAlpha=Math.max(0,Math.min(1,f.l)); ctx.fillStyle=f.c; ctx.shadowBlur=6; ctx.fillText(f.txt,f.x,f.y); if(f.l>0) nextFloats.push(f); }
         ctx.globalAlpha=1; ctx.shadowBlur=0; floats.length=0; floats.push(...nextFloats);
@@ -4180,11 +4432,6 @@ function loop(){
         const hpPct=health/maxHealth;
         document.getElementById('hp-fill').style.background=hpPct>0.5?'linear-gradient(90deg,#ff0044,#ff5588)':hpPct>0.25?'linear-gradient(90deg,#ff6600,#ffaa00)':'linear-gradient(90deg,#ff2200,#ff5500)';
         document.getElementById('vignette').style.display=hpPct<0.3?'block':'none';
-        
-        updateDailyMissionProgress('kill', waveKills);
-        updateDailyMissionProgress('gem', 0);
-        if(waveNoDamage) updateDailyMissionProgress('perfect', waveNoDamage ? 1 : 0);
-        updateDailyMissionProgress('crit', criticalHitsCount);
     }
     drawCrosshair(mouseX,mouseY);
 }
