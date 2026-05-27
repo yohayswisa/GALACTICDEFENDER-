@@ -3754,6 +3754,7 @@ function loop(){
                         let pointBonus = enemies[i].isBoss?1800:70*combo;
                         pointBonus *= skinCreditMultiplier;
                         score += pointBonus; kills++; waveKills++;
+                        updateDailyMissionProgress('kill', 1);
                         for(let k=0;k<12;k++) particles.push(new Particle(enemies[i].x,enemies[i].y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,enemies[i].color,0.8));
                         if(enemies[i].isBoss){ bossesKilled++; boss=null; }
                         enemies.splice(i,1); i--;
@@ -3793,6 +3794,7 @@ function loop(){
                         let pointBonus = next.isBoss?1800:70*combo;
                         pointBonus *= skinCreditMultiplier;
                         score += pointBonus; kills++; waveKills++;
+                        updateDailyMissionProgress('kill', 1);
                         for(let k=0;k<12;k++) particles.push(new Particle(next.x,next.y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#ffff00',0.8));
                         if(next.isBoss){ bossesKilled++; boss=null; }
                         enemies.splice(nearestIdx,1); hit = hit.filter(h => h < enemies.length+1);
@@ -3837,6 +3839,7 @@ function loop(){
                 if(dist<25){
                     let pointBonus = e.isBoss?5000:200*combo; pointBonus *= skinCreditMultiplier;
                     score+=pointBonus; kills++; waveKills++;
+                    updateDailyMissionProgress('kill', 1);
                     if(e.isBoss){ bossesKilled++; boss=null; }
                     for(let k=0;k<10;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*10,(Math.random()-0.5)*10,'#44aaff',0.8));
                     enemies.splice(i,1); i--;
@@ -3856,6 +3859,7 @@ function loop(){
                 if(dist<20){
                     let pointBonus = e.isBoss?8000:300*combo; pointBonus *= skinCreditMultiplier;
                     score+=pointBonus; kills++; waveKills++;
+                    updateDailyMissionProgress('kill', 1);
                     if(e.isBoss){ bossesKilled++; boss=null; }
                     for(let k=0;k<15;k++) particles.push(new Particle(e.x,e.y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#4400aa',0.9));
                     enemies.splice(i,1); i--;
@@ -3885,6 +3889,7 @@ function loop(){
                         let pointBonus = enemies[i].isBoss?1800:70*combo;
                         pointBonus *= skinCreditMultiplier;
                         score += pointBonus; kills++; waveKills++;
+                        updateDailyMissionProgress('kill', 1);
                         for(let k=0;k<12;k++) particles.push(new Particle(enemies[i].x,enemies[i].y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#8800aa',0.8));
                         if(enemies[i].isBoss){ bossesKilled++; boss=null; }
                         enemies.splice(i,1); i--;
@@ -3918,6 +3923,7 @@ function loop(){
                     if(doomsDayActive) pointBonus*=2;
                     pointBonus *= skinCreditMultiplier;
                     score += pointBonus; kills++; waveKills++;
+                    updateDailyMissionProgress('kill', 1);
                     for(let k=0;k<12;k++) particles.push(new Particle(target.x,target.y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,'#ffff00',0.8));
                     if(target.isBoss){ bossesKilled++; boss=null; }
                     enemies.splice(idx,1);
@@ -4307,6 +4313,7 @@ function loop(){
                             let pointBonus = enemies[j].isBoss?1800:70*combo;
                             pointBonus *= skinCreditMultiplier;
                             score += pointBonus; kills++; waveKills++;
+                            updateDailyMissionProgress('kill', 1);
                             for(let k=0;k<12;k++) particles.push(new Particle(enemies[j].x,enemies[j].y,(Math.random()-0.5)*12,(Math.random()-0.5)*12,enemies[j].color,0.8));
                             if(enemies[j].isBoss){ bossesKilled++; boss=null; }
                             enemies.splice(j,1); j--;
